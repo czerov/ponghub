@@ -64,7 +64,21 @@
                 {{ $last := index $arr (sub (len $arr) 1) }}
                 <div class="port-url status-info-{{ $last.Status }}">
                     <span class="status-ball"></span>
-                    <span class="url-text">{{$url}}</span>
+                    <span class="url-text" title="{{$url}}">
+                        {{ if $endpoint.HighlightSegments }}
+                            {{ range $endpoint.HighlightSegments }}
+                                {{ if .IsHighlight }}
+                                    <span class="url-highlight">{{ .Text }}</span>
+                                {{ else }}
+                                    {{ .Text }}
+                                {{ end }}
+                            {{ end }}
+                        {{ else if $endpoint.DisplayURL }}
+                            {{$endpoint.DisplayURL}}
+                        {{ else }}
+                            {{$url}}
+                        {{ end }}
+                    </span>
                     <div class="cert-status
                         cert-status-{{ if not $endpoint.IsHTTPS }}gray{{ else if $endpoint.IsCertExpired }}red{{ else if le $endpoint.CertRemainingDays 30 }}yellow{{ else }}green{{ end }}"
                         data-time="{{ if $endpoint.IsCertExpired }}Cert has expired{{ else }}Cert will expire in {{ $endpoint.CertRemainingDays }} days{{ end }}">

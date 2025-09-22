@@ -82,6 +82,7 @@ func TestMain_new(t *testing.T) {
 }
 
 // copyLogFile copies the log file from srcPath to dstPath.
+// If srcPath doesn't exist, it creates an empty JSON object file at dstPath.
 func copyLogFile(srcPath, dstPath string) error {
 	// remove dstPath if it exists
 	if _, err := os.Stat(dstPath); err == nil {
@@ -89,6 +90,24 @@ func copyLogFile(srcPath, dstPath string) error {
 			log.Println("Error removing existing destination file:", err)
 			return err
 		}
+	}
+
+	// Check if source file exists
+	if _, err := os.Stat(srcPath); os.IsNotExist(err) {
+		// Source file doesn't exist, create an empty JSON object file
+		dstFile, err := os.Create(dstPath)
+		if err != nil {
+			return err
+		}
+		defer func(dstFile *os.File) {
+			if err := dstFile.Close(); err != nil {
+				log.Println("Error closing destination file:", err)
+			}
+		}(dstFile)
+
+		// Write empty JSON object
+		_, err = dstFile.WriteString("{}")
+		return err
 	}
 
 	srcFile, err := os.Open(srcPath)
@@ -127,5 +146,11 @@ func TestMain(m *testing.M) {
 	if err := os.Chdir(root); err != nil {
 		panic(err)
 	}
+
+	// Ensure data directory exists
+	if err := os.MkdirAll("data", 0755); err != nil {
+		panic(err)
+	}
+
 	os.Exit(m.Run())
 }

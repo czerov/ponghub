@@ -46,6 +46,8 @@ PongHub is an open-source service status monitoring website designed to help use
 
 ## Configuration Guide
 
+### Basic Configuration
+
 The `config.yaml` file follows this format:
 
 | Field                               | Type    | Description                                              | Required | Notes                                         |
@@ -89,6 +91,84 @@ services:
       - url: "https://example.com/status"
         method: "POST"
         body: '{"key": "value"}'
+```
+
+### Special Parameters
+
+ponghub now supports powerful parameterized configuration functionality, allowing the use of various types of dynamic variables in configuration files. These variables are generated and resolved in real-time during program execution.
+
+#### 📅 Date and Time Parameters
+
+Use the `{{%format}}` format to define date and time parameters:
+
+- `{{%Y-%m-%d}}` - Current date, format: 2006-01-02 (e.g., 2025-09-22)
+- `{{%H:%M:%S}}` - Current time, format: 15:04:05 (e.g., 17:30:45)
+- `{{%s}}` - Unix timestamp (e.g., 1727859600)
+- `{{%Y}}` - Current year (e.g., 2025)
+- `{{%m}}` - Current month, format: 01-12
+- `{{%d}}` - Current day, format: 01-31
+- `{{%H}}` - Current hour, format: 00-23
+- `{{%M}}` - Current minute, format: 00-59
+- `{{%S}}` - Current second, format: 00-59
+- `{{%B}}` - Full month name (e.g., September)
+- `{{%b}}` - Short month name (e.g., Sep)
+- `{{%A}}` - Full weekday name (e.g., Monday)
+- `{{%a}}` - Short weekday name (e.g., Mon)
+
+#### 🎲 Random Number Parameters
+
+- `{{rand}}` - Generates a random number in the range 0–1000000
+- `{{rand_int}}` - Generates a large-range random integer
+- `{{rand(min,max)}}` - Generates a random number within a specified range
+    - Example: `{{rand(1,100)}}` - Generates a random number between 1 and 100
+    - Example: `{{rand(1000,9999)}}` - Generates a 4-digit random number
+
+#### 🔤 Random String Parameters
+
+- `{{rand_str}}` - Generates an 8-character random string (letters + numbers)
+- `{{rand_str(length)}}` - Generates a random string of specified length
+    - Example: `{{rand_str(16)}}` - Generates a 16-character random string
+- `{{rand_str_secure}}` - Generates a 16-character cryptographically secure random string
+- `{{rand_hex(length)}}` - Generates a random hexadecimal string of specified length
+    - Example: `{{rand_hex(8)}}` - Generates an 8-character hexadecimal string
+    - Example: `{{rand_hex(32)}}` - Generates a 32-character hexadecimal string
+
+#### 🆔 UUID Parameters
+
+- `{{uuid}}` - Generates a standard UUID (with hyphens)
+    - Example: `bf3655f7-8a93-4822-a458-2913a6fe4722`
+- `{{uuid_short}}` - Generates a short UUID (without hyphens)
+    - Example: `14d44b7334014484bb81b015fb2401bf`
+
+#### 🌍 Environment Variable Parameters
+
+- `{{env(variable_name)}}` - Reads the value of an environment variable
+    - Example: `{{env(API_KEY)}}` - Reads the API_KEY environment variable
+    - Example: `{{env(VERSION)}}` - Reads the VERSION environment variable
+    - If the environment variable does not exist, returns an empty string
+
+Ensure that the environment variable is set in your GitHub repository settings under "Settings" -> "Secrets and variables" -> "Actions".
+
+#### 📊 Serial Number and Hash Parameters
+
+- `{{seq}}` - Sequence number based on the current time (6-digit number)
+- `{{seq_daily}}` - Daily sequence number (seconds since midnight)
+- `{{hash_short}}` - Short hash value (6-digit hexadecimal)
+- `{{hash_md5_like}}` - MD5-style long hash value (32-digit hexadecimal)
+
+Below is an example configuration file:
+
+```yaml
+services:
+  - name: "Parameterized Service"
+    endpoints:
+        - url: "https://api.example.com/data?date={{%Y-%m-%d}}&rand={{rand(1,100)}}"
+        - url: "https://api.example.com/submit"
+          method: "POST"
+          headers:
+            Content-Type: application/json
+            X-Request-ID: "{{uuid}}"
+          body: '{"session_id": "{{rand_str(16)}}", "timestamp": "{{%s}}"}'
 ```
 
 ## Development

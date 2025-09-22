@@ -1,5 +1,7 @@
 package reporter
 
+import "github.com/wcy-dt/ponghub/internal/types/types/highlight"
+
 // Data structures for logging and reporting
 type (
 	// HistoryEntry represents a single history entry
@@ -16,6 +18,8 @@ type (
 		IsHTTPS           bool
 		IsCertExpired     bool
 		CertRemainingDays int
+		DisplayURL        string              // Resolved URL for display
+		HighlightSegments []highlight.Segment // Segments with highlight info
 	}
 
 	Endpoints map[string]Endpoint
