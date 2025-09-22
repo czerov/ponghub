@@ -52,6 +52,7 @@ The `config.yaml` file follows this format:
 
 | Field                               | Type    | Description                                              | Required | Notes                                         |
 |-------------------------------------|---------|----------------------------------------------------------|----------|-----------------------------------------------|
+| `display_num`                       | Integer | Number of services displayed on the homepage             | ✖️       | Default is 72 services                        |
 | `timeout`                           | Integer | Timeout for each request in seconds                      | ✖️       | Units are seconds, default is 5 seconds       |
 | `max_retry_times`                   | Integer | Number of retries on request failure                     | ✖️       | Default is 2 retries                          |
 | `max_log_days`                      | Integer | Number of days to retain logs                            | ✖️       | Default is 3 days                             |
@@ -69,6 +70,7 @@ The `config.yaml` file follows this format:
 Here is an example configuration file:
 
 ```yaml
+display_num: 72
 timeout: 5
 max_retry_times: 2
 max_log_days: 3

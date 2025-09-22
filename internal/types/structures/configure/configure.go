@@ -31,5 +31,6 @@ type (
 		MaxRetryTimes  int       `yaml:"max_retry_times,omitempty"`
 		MaxLogDays     int       `yaml:"max_log_days,omitempty"`
 		CertNotifyDays int       `yaml:"cert_notify_days,omitempty"`
+		DisplayNum     int       `yaml:"display_num,omitempty"`
 	}
 )

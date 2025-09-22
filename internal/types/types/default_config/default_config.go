@@ -72,6 +72,13 @@ func GetDisplayNum() int {
 	return displayNum
 }
 
+// SetDefaultDisplayNum sets the default number of logs per endpoint to display in the HTML report for a given configuration pointer
+func SetDefaultDisplayNum(cfg *int) {
+	if *cfg <= 0 {
+		*cfg = GetDisplayNum()
+	}
+}
+
 const (
 	// configPath is the default path to the configuration file
 	configPath = "config.yaml"
