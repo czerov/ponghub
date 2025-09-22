@@ -137,7 +137,7 @@ Use the `{{%format}}` format to define date and time parameters:
 
 - `{{uuid}}` - Generates a standard UUID (with hyphens)
     - Example: `bf3655f7-8a93-4822-a458-2913a6fe4722`
-- `{{uuid_short}}- Generates a short UUID (without hyphens)
+- `{{uuid_short}}` - Generates a short UUID (without hyphens)
     - Example: `14d44b7334014484bb81b015fb2401bf`
 
 #### 🌍 Environment Variable Parameters
