@@ -27,8 +27,8 @@ func main() {
 	}
 
 	// generate the report based on the checkResult
-	reportResult, err := reporter.GetReport(checkResult, default_config.GetLogPath())
-	if err := reporter.WriteReport(reportResult, default_config.GetReportPath()); err != nil {
+	reportResult, err := reporter.GetReport(checkResult, default_config.GetLogPath(), cfg.DisplayNum)
+	if err := reporter.WriteReport(reportResult, default_config.GetReportPath(), cfg.DisplayNum); err != nil {
 		log.Fatalln("Error generating report:", err)
 	} else {
 		log.Println("Report generated at", default_config.GetReportPath())

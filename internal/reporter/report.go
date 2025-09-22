@@ -14,14 +14,14 @@ import (
 )
 
 // GetReport generates a report based on the check results and log data
-func GetReport(checkResult []checker.Checker, logPath string) (reporter.Reporter, error) {
+func GetReport(checkResult []checker.Checker, logPath string, displayNum int) (reporter.Reporter, error) {
 	logResult, err := common.ReadLogs(logPath)
 	if err != nil {
 		log.Printf("Error loading log data from %s: %v", logPath, err)
 		return nil, err
 	}
 
-	reportResult := reporter.ParseLogResult(logResult)
+	reportResult := reporter.ParseLogResult(logResult, displayNum)
 
 	// calculate availability
 	for serviceName, serviceReport := range reportResult {
@@ -60,7 +60,7 @@ func GetReport(checkResult []checker.Checker, logPath string) (reporter.Reporter
 }
 
 // WriteReport generates an HTML report from the provided log data
-func WriteReport(reportResult reporter.Reporter, reportPath string) error {
+func WriteReport(reportResult reporter.Reporter, reportPath string, displayNum int) error {
 	tmpl, err := template.New("report.html").
 		Funcs(createTemplateFunc()).
 		ParseFiles(default_config.GetTemplatePath())
@@ -81,7 +81,7 @@ func WriteReport(reportResult reporter.Reporter, reportPath string) error {
 	if err := tmpl.Execute(reportFile, map[string]any{
 		"ReportResult": reportResult,
 		"UpdateTime":   getLatestTime(reportResult),
-		"DisplayNum":   default_config.GetDisplayNum(),
+		"DisplayNum":   displayNum,
 	}); err != nil {
 		return fmt.Errorf("template execution failed: %w", err)
 	}

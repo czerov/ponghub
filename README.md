@@ -52,6 +52,7 @@ The `config.yaml` file follows this format:
 
 | Field                               | Type    | Description                                              | Required | Notes                                         |
 |-------------------------------------|---------|----------------------------------------------------------|----------|-----------------------------------------------|
+| `display_num`                       | Integer | Number of services displayed on the homepage             | ✖️       | Default is 72 services                        |
 | `timeout`                           | Integer | Timeout for each request in seconds                      | ✖️       | Units are seconds, default is 5 seconds       |
 | `max_retry_times`                   | Integer | Number of retries on request failure                     | ✖️       | Default is 2 retries                          |
 | `max_log_days`                      | Integer | Number of days to retain logs                            | ✖️       | Default is 3 days                             |
@@ -69,6 +70,7 @@ The `config.yaml` file follows this format:
 Here is an example configuration file:
 
 ```yaml
+display_num: 72
 timeout: 5
 max_retry_times: 2
 max_log_days: 3
@@ -96,6 +98,11 @@ services:
 ### Special Parameters
 
 ponghub now supports powerful parameterized configuration functionality, allowing the use of various types of dynamic variables in configuration files. These variables are generated and resolved in real-time during program execution.
+
+<details>
+<summary>Click and expand to see supported parameter types</summary>
+
+<div markdown="1">
 
 #### 📅 Date and Time Parameters
 
@@ -155,6 +162,9 @@ Ensure that the environment variable is set in your GitHub repository settings u
 - `{{seq_daily}}` - Daily sequence number (seconds since midnight)
 - `{{hash_short}}` - Short hash value (6-digit hexadecimal)
 - `{{hash_md5_like}}` - MD5-style long hash value (32-digit hexadecimal)
+
+</div>
+</details>
 
 Below is an example configuration file:
 

@@ -5,14 +5,11 @@ import (
 	"sort"
 
 	"github.com/wcy-dt/ponghub/internal/types/structures/logger"
-	"github.com/wcy-dt/ponghub/internal/types/types/default_config"
 )
 
 // convertToHistory converts logger history entries to reporter history format,
 // sorts them by time and returns only the last displayNum entries.
-func convertToHistory(logEntries []logger.HistoryEntry) History {
-	displayNum := default_config.GetDisplayNum()
-
+func convertToHistory(logEntries []logger.HistoryEntry, displayNum int) History {
 	var history History
 	for _, entry := range logEntries {
 		history = append(history, HistoryEntry{
@@ -36,7 +33,7 @@ func convertToHistory(logEntries []logger.HistoryEntry) History {
 }
 
 // ParseLogResult converts logger.Logger data into a reporter.Reporter format.
-func ParseLogResult(logResult logger.Logger) Reporter {
+func ParseLogResult(logResult logger.Logger, displayNum int) Reporter {
 	report := make(Reporter)
 	for serviceName, serviceLog := range logResult {
 		if len(serviceLog.ServiceHistory) == 0 {
@@ -47,14 +44,14 @@ func ParseLogResult(logResult logger.Logger) Reporter {
 		// Convert logger.Endpoints to reporter.Endpoints
 		endpoints := make(Endpoints)
 		for url, endpointLog := range serviceLog.Endpoints {
-			endpointHistory := convertToHistory(endpointLog)
+			endpointHistory := convertToHistory(endpointLog, displayNum)
 			endpoints[url] = Endpoint{
 				EndpointHistory: endpointHistory,
 			}
 		}
 
 		// convert logger.ServiceHistory to reporter.ServiceHistory
-		serviceHistory := convertToHistory(serviceLog.ServiceHistory)
+		serviceHistory := convertToHistory(serviceLog.ServiceHistory, displayNum)
 
 		newService := Service{
 			ServiceHistory: serviceHistory,
