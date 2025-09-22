@@ -146,6 +146,8 @@ ponghub 现已支持强大的参数化配置功能，允许在配置文件中使
     - 示例：`{{env(VERSION)}}` - 读取VERSION环境变量
     - 如果环境变量不存在，返回空字符串
 
+环境变量可通过 GitHub Actions 的 Repository Secrets 设置
+
 #### 📊 序列号和哈希参数
 
 - `{{seq}}` - 基于当前时间的序列号（6位数字）

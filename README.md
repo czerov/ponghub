@@ -147,6 +147,8 @@ Use the `{{%format}}` format to define date and time parameters:
     - Example: `{{env(VERSION)}}` - Reads the VERSION environment variable
     - If the environment variable does not exist, returns an empty string
 
+Ensure that the environment variable is set in your GitHub repository settings under "Settings" -> "Secrets and variables" -> "Actions".
+
 #### 📊 Serial Number and Hash Parameters
 
 - `{{seq}}` - Sequence number based on the current time (6-digit number)
