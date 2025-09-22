@@ -97,6 +97,11 @@ services:
 
 ponghub now supports powerful parameterized configuration functionality, allowing the use of various types of dynamic variables in configuration files. These variables are generated and resolved in real-time during program execution.
 
+<details>
+<summary>Click and expand to see supported parameter types</summary>
+
+<div markdown="1">
+
 #### 📅 Date and Time Parameters
 
 Use the `{{%format}}` format to define date and time parameters:
@@ -155,6 +160,9 @@ Ensure that the environment variable is set in your GitHub repository settings u
 - `{{seq_daily}}` - Daily sequence number (seconds since midnight)
 - `{{hash_short}}` - Short hash value (6-digit hexadecimal)
 - `{{hash_md5_like}}` - MD5-style long hash value (32-digit hexadecimal)
+
+</div>
+</details>
 
 Below is an example configuration file:
 
