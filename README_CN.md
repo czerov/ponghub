@@ -170,6 +170,12 @@ services:
           body: '{"session_id": "{{rand_str(16)}}", "timestamp": "{{%s}}"}'
 ```
 
+### 自定义通知
+
+PongHub 默认利用 GitHub Actions 报错实现异常告警通知。
+
+如果需要自定义通知，可以在根目录下创建 `notify.sh` 脚本，脚本可以读取 `data/notify.txt` 文件中的内容，并通过邮件、短信或其他方式发送通知。如果脚本使用到了环境变量，请确保在 GitHub 仓库的 "Settings" -> "Secrets and variables" -> "Actions" 中正确设置这些变量。
+
 ## 本地开发
 
 本项目使用 Makefile 进行本地开发和测试。你可以使用以下命令在本地运行项目：

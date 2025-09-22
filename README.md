@@ -171,6 +171,12 @@ services:
           body: '{"session_id": "{{rand_str(16)}}", "timestamp": "{{%s}}"}'
 ```
 
+### Custom Notifications
+
+PongHub uses GitHub Actions for exception alert notifications by default.
+
+If you need custom notifications, you can create a `notify.sh` script in the root directory. The script can read the contents of the `data/notify.txt` file and send notifications via email, SMS, or other methods. If the script uses environment variables, ensure that these variables are correctly set in the "Settings" -> "Secrets and variables" -> "Actions" section of your GitHub repository.
+
 ## Development
 
 This project uses Makefile for local development and testing. You can run the project locally with the following command:

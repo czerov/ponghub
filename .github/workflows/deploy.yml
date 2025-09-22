@@ -64,7 +64,14 @@ jobs:
           if [ -f data/notify.txt ] && [ -s data/notify.txt ]; then
             echo "Unavailable services found:"
             cat data/notify.txt
-            exit 1
+            if [ -f "./notify.sh" ]; then
+              echo "Running custom notification script..."
+              chmod +x ./notify.sh
+              ./notify.sh
+            else
+              echo "No custom notification script found, using default notification."
+              exit 1
+            fi
           else
             echo "No unavailable services."
           fi
