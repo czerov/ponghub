@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/wcy-dt/ponghub/internal/types/types/chk_result"
+	"github.com/wcy-dt/ponghub/internal/types/types/highlight"
 )
 
 // Result defines the structure for the result of checking a service
@@ -36,5 +37,8 @@ type (
 		IsHTTPS           bool                   `json:"is_https,omitempty"`
 		CertRemainingDays int                    `json:"cert_remaining_days,omitempty"`
 		IsCertExpired     bool                   `json:"is_cert_expired,omitempty"`
+		// Highlight information for display
+		DisplayURL        string              `json:"display_url,omitempty"`
+		HighlightSegments []highlight.Segment `json:"highlight_segments,omitempty"`
 	}
 )

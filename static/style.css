@@ -198,9 +198,26 @@ body {
 }
 
 .port-url .url-text {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: inline;
+    align-items: flex-start;
+    justify-content: flex-start;
+    word-break: break-all;
+    white-space: normal;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+.url-highlight {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(44, 124, 255, 0.04);
+    display: inline;
+    word-break: break-all;
+    white-space: normal;
+    line-height: 1.4;
 }
 
 .port-url .cert-status {

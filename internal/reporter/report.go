@@ -50,6 +50,8 @@ func GetReport(checkResult []checker.Checker, logPath string) (reporter.Reporter
 			tmp.IsHTTPS = endpointResult.IsHTTPS
 			tmp.CertRemainingDays = endpointResult.CertRemainingDays
 			tmp.IsCertExpired = endpointResult.IsCertExpired
+			tmp.DisplayURL = endpointResult.DisplayURL
+			tmp.HighlightSegments = endpointResult.HighlightSegments
 			reportResult[serviceName].Endpoints[url] = tmp
 		}
 	}

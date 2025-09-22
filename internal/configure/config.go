@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/wcy-dt/ponghub/internal/common"
 	"github.com/wcy-dt/ponghub/internal/types/structures/configure"
 	"github.com/wcy-dt/ponghub/internal/types/types/default_config"
 
@@ -20,6 +21,38 @@ func setDefaultConfigs(cfg *configure.Configure) {
 	for i := range cfg.Services {
 		default_config.SetDefaultTimeout(&cfg.Services[i].Timeout)
 		default_config.SetDefaultMaxRetryTimes(&cfg.Services[i].MaxRetryTimes)
+	}
+}
+
+// resolveConfigParameters resolves dynamic parameters in configuration
+func resolveConfigParameters(cfg *configure.Configure) {
+	resolver := common.NewParameterResolver()
+
+	for i := range cfg.Services {
+		for j := range cfg.Services[i].Endpoints {
+			endpoint := &cfg.Services[i].Endpoints[j]
+
+			// Save original template values
+			endpoint.OriginalURL = endpoint.URL
+			endpoint.OriginalBody = endpoint.Body
+			endpoint.OriginalResponseRegex = endpoint.ResponseRegex
+			if endpoint.Headers != nil {
+				endpoint.OriginalHeaders = make(map[string]string)
+				for key, value := range endpoint.Headers {
+					endpoint.OriginalHeaders[key] = value
+				}
+			}
+
+			// Resolve parameters
+			endpoint.URL = resolver.ResolveParameters(endpoint.URL)
+			endpoint.Body = resolver.ResolveParameters(endpoint.Body)
+			endpoint.ResponseRegex = resolver.ResolveParameters(endpoint.ResponseRegex)
+
+			// Resolve headers
+			for key, value := range endpoint.Headers {
+				endpoint.Headers[key] = resolver.ResolveParameters(value)
+			}
+		}
 	}
 }
 
@@ -42,6 +75,10 @@ func ReadConfigs(path string) (*configure.Configure, error) {
 	if err := decoder.Decode(cfg); err != nil {
 		log.Fatalln("Failed to decode YAML config:", err)
 	}
+
+	// Resolve dynamic parameters
+	resolveConfigParameters(cfg)
+
 	// Set default values for the configuration
 	setDefaultConfigs(cfg)
 

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wcy-dt/ponghub/internal/common"
 	"github.com/wcy-dt/ponghub/internal/types/structures/checker"
 	"github.com/wcy-dt/ponghub/internal/types/structures/configure"
 )
@@ -30,6 +31,16 @@ func checkEndpoint(cfg *configure.Endpoint, timeout int, maxRetryTimes int, serv
 	urlIsHTTPS := isHTTPS(cfg.URL)
 	certRemainingDays := 0
 	isCertExpired := false
+
+	// Generate display URL for smart showing of template vs resolved URL
+	resolver := common.NewParameterResolver()
+	displayURL, highlightSegments := resolver.HighlightChanges(cfg.OriginalURL)
+	originalURL := cfg.OriginalURL
+	if originalURL == "" {
+		originalURL = cfg.URL
+		displayURL = cfg.URL
+		highlightSegments = nil
+	}
 
 	// Check SSL certificate if it's an HTTPS URL
 	if urlIsHTTPS {
@@ -128,6 +139,8 @@ func checkEndpoint(cfg *configure.Endpoint, timeout int, maxRetryTimes int, serv
 		IsHTTPS:           urlIsHTTPS,
 		CertRemainingDays: certRemainingDays,
 		IsCertExpired:     isCertExpired,
+		DisplayURL:        displayURL,
+		HighlightSegments: highlightSegments,
 	}
 }
 
