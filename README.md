@@ -163,6 +163,81 @@ Ensure that the environment variable is set in your GitHub repository settings u
 - `{{hash_short}}` - Short hash value (6-digit hexadecimal)
 - `{{hash_md5_like}}` - MD5-style long hash value (32-digit hexadecimal)
 
+#### 🌐 Network and System Information Parameters
+
+- `{{local_ip}}` - Gets the local IP address of the system
+- `{{hostname}}` - Gets the hostname of the system
+- `{{user_agent}}` - Generates a random User-Agent string for HTTP requests
+- `{{http_method}}` - Generates a random HTTP method (GET, POST, PUT, DELETE, etc.)
+
+#### 🔐 Encoding and Decoding Parameters
+
+- `{{base64(content)}}` - Base64 encodes the provided content
+    - Example: `{{base64(hello world)}}` - Encodes "hello world" to Base64
+- `{{url_encode(content)}}` - URL encodes the provided content
+    - Example: `{{url_encode(hello world)}}` - URL encodes "hello world"
+- `{{json_escape(content)}}` - JSON escapes the provided content
+    - Example: `{{json_escape("test")}}` - Escapes quotes and special characters for JSON
+
+#### 🔢 Mathematical Operation Parameters
+
+- `{{add(a,b)}}` - Adds two numbers
+    - Example: `{{add(10,5)}}` - Returns 15
+- `{{sub(a,b)}}` - Subtracts two numbers
+    - Example: `{{sub(10,5)}}` - Returns 5
+- `{{mul(a,b)}}` - Multiplies two numbers
+    - Example: `{{mul(10,5)}}` - Returns 50
+- `{{div(a,b)}}` - Divides two numbers
+    - Example: `{{div(10,5)}}` - Returns 2
+
+#### 📝 Text Processing Parameters
+
+- `{{upper(text)}}` - Converts text to uppercase
+    - Example: `{{upper(hello)}}` - Returns "HELLO"
+- `{{lower(text)}}` - Converts text to lowercase
+    - Example: `{{lower(HELLO)}}` - Returns "hello"
+- `{{reverse(text)}}` - Reverses the text
+    - Example: `{{reverse(hello)}}` - Returns "olleh"
+- `{{substr(text,start,length)}}` - Extracts substring from text
+    - Example: `{{substr(hello world,0,5)}}` - Returns "hello"
+
+#### 🎨 Color Generation Parameters
+
+- `{{color_hex}}` - Generates a random hexadecimal color code
+    - Example: `#FF5733`
+- `{{color_rgb}}` - Generates a random RGB color value
+    - Example: `rgb(255, 87, 51)`
+- `{{color_hsl}}` - Generates a random HSL color value
+    - Example: `hsl(120, 50%, 75%)`
+
+#### 📁 File and MIME Type Parameters
+
+- `{{mime_type}}` - Generates a random MIME type
+    - Example: `application/json`, `image/png`, `text/html`
+- `{{file_ext}}` - Generates a random file extension
+    - Example: `.jpg`, `.pdf`, `.txt`
+
+#### 👤 Fake Data Generation Parameters
+
+- `{{fake_email}}` - Generates a realistic fake email address
+    - Example: `john.smith@example.com`
+- `{{fake_phone}}` - Generates a fake phone number
+    - Example: `+1-555-0123`
+- `{{fake_name}}` - Generates a fake person name
+    - Example: `John Smith`
+- `{{fake_domain}}` - Generates a fake domain name
+    - Example: `example-site.com`
+
+#### ⏰ Time Calculation Parameters
+
+- `{{time_add(duration)}}` - Adds duration to current time
+    - Example: `{{time_add(1h)}}` - Adds 1 hour to current time
+    - Example: `{{time_add(30m)}}` - Adds 30 minutes to current time
+    - Supported units: s (seconds), m (minutes), h (hours), d (days)
+- `{{time_sub(duration)}}` - Subtracts duration from current time
+    - Example: `{{time_sub(1d)}}` - Subtracts 1 day from current time
+    - Example: `{{time_sub(2h30m)}}` - Subtracts 2 hours and 30 minutes
+
 </div>
 </details>
 

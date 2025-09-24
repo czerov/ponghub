@@ -1,9 +1,7 @@
-package common
+package params
 
 import (
-	"crypto/rand"
 	"fmt"
-	"math/big"
 	mathrand "math/rand"
 	"os"
 	"regexp"
@@ -27,90 +25,6 @@ func NewParameterResolver() *ParameterResolver {
 		currentTime: time.Now(),
 		randSource:  mathrand.New(mathrand.NewSource(time.Now().UnixNano())),
 	}
-}
-
-// NewParameterResolverWithTime creates a new parameter resolver with specified time
-func NewParameterResolverWithTime(t time.Time) *ParameterResolver {
-	return &ParameterResolver{
-		currentTime: t,
-		randSource:  mathrand.New(mathrand.NewSource(t.UnixNano())),
-	}
-}
-
-// generateRandomString generates a random string of specified length
-func (pr *ParameterResolver) generateRandomString(length int, charset string) string {
-	if charset == "" {
-		charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	}
-
-	result := make([]byte, length)
-	for i := range result {
-		result[i] = charset[pr.randSource.Intn(len(charset))]
-	}
-	return string(result)
-}
-
-// generateSecureRandomString generates a cryptographically secure random string
-func (pr *ParameterResolver) generateSecureRandomString(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	result := make([]byte, length)
-	for i := range result {
-		num, _ := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
-		result[i] = charset[num.Int64()]
-	}
-	return string(result)
-}
-
-// formatTimeWithPattern converts Go time format patterns to actual values
-func (pr *ParameterResolver) formatTimeWithPattern(pattern string) string {
-	// Convert strftime-like patterns to Go time format
-	replacements := map[string]string{
-		"%Y": "2006",    // 4-digit year
-		"%y": "06",      // 2-digit year
-		"%m": "01",      // month (01-12)
-		"%d": "02",      // day (01-31)
-		"%H": "15",      // hour (00-23)
-		"%M": "04",      // minute (00-59)
-		"%S": "05",      // second (00-59)
-		"%B": "January", // full month name
-		"%b": "Jan",     // abbreviated month name
-		"%A": "Monday",  // full weekday name
-		"%a": "Mon",     // abbreviated weekday name
-		"%j": "002",     // day of year (001-366)
-		"%U": "",        // week of year (placeholder)
-		"%W": "",        // week of year (placeholder)
-		"%w": "",        // weekday (placeholder)
-		"%Z": "MST",     // timezone name
-		"%z": "-0700",   // timezone offset
-		"%s": "",        // Unix timestamp (placeholder)
-	}
-
-	goFormat := pattern
-	for strftime, goFmt := range replacements {
-		if goFmt != "" {
-			goFormat = strings.ReplaceAll(goFormat, strftime, goFmt)
-		}
-	}
-
-	// Handle special cases that don't have direct Go equivalents
-	if strings.Contains(pattern, "%U") || strings.Contains(pattern, "%W") {
-		_, week := pr.currentTime.ISOWeek()
-		weekStr := fmt.Sprintf("%02d", week)
-		goFormat = strings.ReplaceAll(goFormat, "%U", weekStr)
-		goFormat = strings.ReplaceAll(goFormat, "%W", weekStr)
-	}
-
-	if strings.Contains(pattern, "%w") {
-		weekday := int(pr.currentTime.Weekday())
-		goFormat = strings.ReplaceAll(goFormat, "%w", fmt.Sprintf("%d", weekday))
-	}
-
-	if strings.Contains(pattern, "%s") {
-		timestamp := fmt.Sprintf("%d", pr.currentTime.Unix())
-		goFormat = strings.ReplaceAll(goFormat, "%s", timestamp)
-	}
-
-	return pr.currentTime.Format(goFormat)
 }
 
 // resolveSpecialParameter resolves non-datetime special parameters
@@ -157,9 +71,9 @@ func (pr *ParameterResolver) resolveSpecialParameter(param string) string {
 		// Handle rand_hex(length) format
 		lengthStr := param[9 : len(param)-1]
 		if length, err := strconv.Atoi(strings.TrimSpace(lengthStr)); err == nil && length > 0 {
-			return pr.generateRandomString(length, "0123456789abcdef")
+			return pr.generateRandomString(length, HexCharset)
 		}
-		return pr.generateRandomString(8, "0123456789abcdef")
+		return pr.generateRandomString(8, HexCharset)
 
 	// Environment variables
 	case strings.HasPrefix(param, "env(") && strings.HasSuffix(param, ")"):
@@ -182,6 +96,80 @@ func (pr *ParameterResolver) resolveSpecialParameter(param string) string {
 		return fmt.Sprintf("%x", pr.currentTime.UnixNano()%0xFFFFFF)
 	case param == "hash_md5_like":
 		return fmt.Sprintf("%032x", pr.currentTime.UnixNano())
+
+	// Network and System Information
+	case param == "local_ip":
+		return pr.getLocalIP()
+	case param == "hostname":
+		return pr.getHostname()
+	case param == "user_agent":
+		return pr.generateUserAgent()
+	case param == "http_method":
+		return HTTPMethods[pr.randSource.Intn(len(HTTPMethods))]
+
+	// Encoding and Decoding
+	case strings.HasPrefix(param, "base64(") && strings.HasSuffix(param, ")"):
+		content := param[7 : len(param)-1]
+		return pr.base64Encode(content)
+	case strings.HasPrefix(param, "url_encode(") && strings.HasSuffix(param, ")"):
+		content := param[11 : len(param)-1]
+		return pr.urlEncode(content)
+	case strings.HasPrefix(param, "json_escape(") && strings.HasSuffix(param, ")"):
+		content := param[12 : len(param)-1]
+		return pr.jsonEscape(content)
+
+	// Mathematical Operations
+	case strings.HasPrefix(param, "add(") && strings.HasSuffix(param, ")"):
+		return pr.mathOperation(param[4:len(param)-1], "add")
+	case strings.HasPrefix(param, "sub(") && strings.HasSuffix(param, ")"):
+		return pr.mathOperation(param[4:len(param)-1], "sub")
+	case strings.HasPrefix(param, "mul(") && strings.HasSuffix(param, ")"):
+		return pr.mathOperation(param[4:len(param)-1], "mul")
+	case strings.HasPrefix(param, "div(") && strings.HasSuffix(param, ")"):
+		return pr.mathOperation(param[4:len(param)-1], "div")
+
+	// Text Processing
+	case strings.HasPrefix(param, "upper(") && strings.HasSuffix(param, ")"):
+		content := param[6 : len(param)-1]
+		return strings.ToUpper(content)
+	case strings.HasPrefix(param, "lower(") && strings.HasSuffix(param, ")"):
+		content := param[6 : len(param)-1]
+		return strings.ToLower(content)
+	case strings.HasPrefix(param, "reverse(") && strings.HasSuffix(param, ")"):
+		content := param[8 : len(param)-1]
+		return pr.reverseString(content)
+	case strings.HasPrefix(param, "substr(") && strings.HasSuffix(param, ")"):
+		return pr.subString(param[7 : len(param)-1])
+
+	// Color and CSS
+	case param == "color_hex":
+		return pr.generateHexColor()
+	case param == "color_rgb":
+		return pr.generateRGBColor()
+	case param == "color_hsl":
+		return pr.generateHSLColor()
+
+	// File and MIME types
+	case param == "mime_type":
+		return pr.generateMimeType()
+	case param == "file_ext":
+		return pr.generateFileExtension()
+
+	// Fake Data Generation
+	case param == "fake_email":
+		return pr.generateFakeEmail()
+	case param == "fake_phone":
+		return pr.generateFakePhone()
+	case param == "fake_name":
+		return pr.generateFakeName()
+	case param == "fake_domain":
+		return pr.generateFakeDomain()
+
+	// Time calculations
+	case strings.HasPrefix(param, "time_add(") && strings.HasSuffix(param, ")"):
+		return pr.timeCalculation(param[9:len(param)-1], "add")
+	case strings.HasPrefix(param, "time_sub(") && strings.HasSuffix(param, ")"):
+		return pr.timeCalculation(param[9:len(param)-1], "sub")
 
 	default:
 		// If it's a time format, try to format it
@@ -212,17 +200,10 @@ func (pr *ParameterResolver) resolveSpecialParameterForDisplay(param string) str
 
 // maskSensitiveValue masks sensitive environment variable values
 func (pr *ParameterResolver) maskSensitiveValue(value, envVar string) string {
-	// List of sensitive environment variable patterns
-	sensitivePatterns := []string{
-		"key", "secret", "token", "password", "pass", "pwd",
-		"auth", "credential", "private", "api_key", "access",
-		"jwt", "bearer", "signature", "hash", "salt",
-	}
-
 	envVarLower := strings.ToLower(envVar)
 
 	// Check if this environment variable name suggests it contains sensitive data
-	for _, pattern := range sensitivePatterns {
+	for _, pattern := range SensitivePatterns {
 		if strings.Contains(envVarLower, pattern) {
 			return pr.maskValue(value)
 		}
@@ -262,21 +243,74 @@ func (pr *ParameterResolver) maskValue(value string) string {
 
 // ResolveParameters resolves dynamic parameters in a string
 func (pr *ParameterResolver) ResolveParameters(input string) string {
-	// Use regex to find and replace parameters in {{...}} format
-	re := regexp.MustCompile(`\{\{([^}]+)}}`)
+	return pr.resolveParametersWithDepth(input, 0, make(map[string]bool))
+}
 
-	result := re.ReplaceAllStringFunc(input, func(match string) string {
-		// Extract the parameter from {{parameter}}
-		param := strings.TrimSpace(re.FindStringSubmatch(match)[1])
+// resolveParametersWithDepth resolves parameters with recursion depth control and cycle detection
+func (pr *ParameterResolver) resolveParametersWithDepth(input string, depth int, resolved map[string]bool) string {
+	const maxDepth = 10 // Prevent infinite recursion
 
-		// Handle time format parameters (starting with %)
-		if strings.HasPrefix(param, "%") {
-			return pr.formatTimeWithPattern(param)
+	if depth >= maxDepth {
+		return input // Return as-is if max depth reached
+	}
+
+	// Check for cycles in resolution
+	if resolved[input] {
+		return input // Return as-is if we've already processed this exact string
+	}
+
+	// Use regex to find parameters in {{...}} format
+	re := regexp.MustCompile(`\{\{([^{}]+)}}`)
+
+	// If no matches found, return the input
+	if !re.MatchString(input) {
+		return input
+	}
+
+	// Mark this input as being resolved to detect cycles
+	resolved[input] = true
+
+	// Find all matches and their positions
+	matches := re.FindAllStringSubmatchIndex(input, -1)
+	if len(matches) == 0 {
+		delete(resolved, input)
+		return input
+	}
+
+	result := input
+
+	// Process matches from right to left to preserve indices
+	for i := len(matches) - 1; i >= 0; i-- {
+		match := matches[i]
+		fullMatchStart, fullMatchEnd := match[0], match[1]
+		paramStart, paramEnd := match[2], match[3]
+
+		// Extract the parameter content
+		param := strings.TrimSpace(input[paramStart:paramEnd])
+
+		// First, recursively resolve any nested parameters within this parameter
+		resolvedParam := pr.resolveParametersWithDepth(param, depth+1, resolved)
+
+		// Then resolve the parameter itself
+		var resolvedValue string
+		if strings.HasPrefix(resolvedParam, "%") {
+			resolvedValue = pr.formatTimeWithPattern(resolvedParam)
+		} else {
+			resolvedValue = pr.resolveSpecialParameter(resolvedParam)
 		}
 
-		// Handle other special parameters
-		return pr.resolveSpecialParameter(param)
-	})
+		// Replace the match in the result
+		result = result[:fullMatchStart] + resolvedValue + result[fullMatchEnd:]
+	}
+
+	// Remove this input from resolved map
+	delete(resolved, input)
+
+	// Check if the result contains more parameters that need resolution
+	if re.MatchString(result) && result != input {
+		// Recursively resolve the result if it still contains parameters
+		return pr.resolveParametersWithDepth(result, depth, resolved)
+	}
 
 	return result
 }

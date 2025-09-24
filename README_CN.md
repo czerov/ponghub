@@ -162,6 +162,81 @@ ponghub 现已支持强大的参数化配置功能，允许在配置文件中使
 - `{{hash_short}}` - 短哈希值（6位十六进制）
 - `{{hash_md5_like}}` - MD5风格的长哈希值（32位十六进制）
 
+#### 🌐 网络和系统信息参数
+
+- `{{local_ip}}` - 获取系统本地IP地址
+- `{{hostname}}` - 获取系统主机名
+- `{{user_agent}}` - 生成随机的User-Agent字符串
+- `{{http_method}}` - 生成随机的HTTP方法（GET、POST、PUT、DELETE等）
+
+#### 🔐 编码和解码参数
+
+- `{{base64(内容)}}` - 对提供的内容进行Base64编码
+    - 示例：`{{base64(hello world)}}` - 将"hello world"编码为Base64
+- `{{url_encode(内容)}}` - 对提供的内容进行URL编码
+    - 示例：`{{url_encode(hello world)}}` - 对"hello world"进行URL编码
+- `{{json_escape(内容)}}` - 对提供的内容进行JSON转义
+    - 示例：`{{json_escape("test")}}` - 转义引号和特殊字符以用于JSON
+
+#### 🔢 数学运算参数
+
+- `{{add(a,b)}}` - 两数相加
+    - 示例：`{{add(10,5)}}` - 返回15
+- `{{sub(a,b)}}` - 两数相减
+    - 示例：`{{sub(10,5)}}` - 返回5
+- `{{mul(a,b)}}` - 两数相乘
+    - 示例：`{{mul(10,5)}}` - 返回50
+- `{{div(a,b)}}` - 两数相除
+    - 示例：`{{div(10,5)}}` - 返回2
+
+#### 📝 文本处理参数
+
+- `{{upper(文本)}}` - 将文本转换为大写
+    - 示例：`{{upper(hello)}}` - 返回"HELLO"
+- `{{lower(文本)}}` - 将文本转换为小写
+    - 示例：`{{lower(HELLO)}}` - 返回"hello"
+- `{{reverse(文本)}}` - 反转文本
+    - 示例：`{{reverse(hello)}}` - 返回"olleh"
+- `{{substr(文本,起始位置,长度)}}` - 从文本中提取子字符串
+    - 示例：`{{substr(hello world,0,5)}}` - 返回"hello"
+
+#### 🎨 颜色生成参数
+
+- `{{color_hex}}` - 生成随机的十六进制颜色代码
+    - 示例：`#FF5733`
+- `{{color_rgb}}` - 生成随机的RGB颜色值
+    - 示例：`rgb(255, 87, 51)`
+- `{{color_hsl}}` - 生成随机的HSL颜色值
+    - 示例：`hsl(120, 50%, 75%)`
+
+#### 📁 文件和MIME类型参数
+
+- `{{mime_type}}` - 生成随机的MIME类型
+    - 示例：`application/json`、`image/png`、`text/html`
+- `{{file_ext}}` - 生成随机的文件扩展名
+    - 示例：`.jpg`、`.pdf`、`.txt`
+
+#### 👤 虚拟数据生成参数
+
+- `{{fake_email}}` - 生成逼真的虚拟邮箱地址
+    - 示例：`john.smith@example.com`
+- `{{fake_phone}}` - 生成虚拟电话号码
+    - 示例：`+1-555-0123`
+- `{{fake_name}}` - 生成虚拟人名
+    - 示例：`张三`
+- `{{fake_domain}}` - 生成虚拟域名
+    - 示例：`example-site.com`
+
+#### ⏰ 时间计算参数
+
+- `{{time_add(时长)}}` - 在当前时间基础上增加指定时长
+    - 示例：`{{time_add(1h)}}` - 在当前时间上增加1小时
+    - 示例：`{{time_add(30m)}}` - 在当前时间上增加30分钟
+    - 支持的单位：s（秒）、m（分钟）、h（小时）、d（天）
+- `{{time_sub(时长)}}` - 在当前时间基础上减去指定时长
+    - 示例：`{{time_sub(1d)}}` - 在当前时间上减去1天
+    - 示例：`{{time_sub(2h30m)}}` - 在当前时间上减去2小时30分钟
+
 </div>
 </details>
 

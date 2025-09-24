@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wcy-dt/ponghub/internal/common"
+	"github.com/wcy-dt/ponghub/internal/common/params"
 	"github.com/wcy-dt/ponghub/internal/types/structures/checker"
 	"github.com/wcy-dt/ponghub/internal/types/structures/configure"
 )
@@ -33,7 +33,7 @@ func checkEndpoint(cfg *configure.Endpoint, timeout int, maxRetryTimes int, serv
 	isCertExpired := false
 
 	// Generate display URL for smart showing of template vs resolved URL
-	resolver := common.NewParameterResolver()
+	resolver := params.NewParameterResolver()
 	displayURL, highlightSegments := resolver.HighlightChanges(cfg.OriginalURL)
 	originalURL := cfg.OriginalURL
 	if originalURL == "" {
