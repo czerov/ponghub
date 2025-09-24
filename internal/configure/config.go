@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/wcy-dt/ponghub/internal/common"
+	"github.com/wcy-dt/ponghub/internal/common/params"
 	"github.com/wcy-dt/ponghub/internal/types/structures/configure"
 	"github.com/wcy-dt/ponghub/internal/types/types/default_config"
 
@@ -27,7 +27,7 @@ func setDefaultConfigs(cfg *configure.Configure) {
 
 // resolveConfigParameters resolves dynamic parameters in configuration
 func resolveConfigParameters(cfg *configure.Configure) {
-	resolver := common.NewParameterResolver()
+	resolver := params.NewParameterResolver()
 
 	for i := range cfg.Services {
 		for j := range cfg.Services[i].Endpoints {
