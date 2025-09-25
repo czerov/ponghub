@@ -389,21 +389,15 @@ func TestMaskSensitiveValue(t *testing.T) {
 	pr := NewParameterResolver()
 
 	// Test short value masking
-	result := pr.maskSensitiveValue("abc", "api_key")
+	result := pr.maskSensitiveValue("abc")
 	if result != "***" {
 		t.Errorf("Short value should be fully masked, got %s", result)
 	}
 
 	// Test longer value masking
-	result = pr.maskSensitiveValue("secret123456", "password")
-	if !strings.HasPrefix(result, "se") || !strings.HasSuffix(result, "56") {
-		t.Errorf("Long value should show first 2 and last 2 chars, got %s", result)
-	}
-
-	// Test non-sensitive value
-	result = pr.maskSensitiveValue("normal_value", "normal_var")
-	if result != "normal_value" {
-		t.Errorf("Non-sensitive value should remain unchanged, got %s", result)
+	result = pr.maskSensitiveValue("secret123456")
+	if !strings.HasPrefix(result, "s") || !strings.HasSuffix(result, "6") {
+		t.Errorf("Long value should show first 1 and last 1 char, got %s", result)
 	}
 }
 
@@ -472,7 +466,7 @@ func TestResolveSpecialParameterForDisplay(t *testing.T) {
 	}(testKey)
 
 	// Test that sensitive env vars are masked for display
-	result := pr.resolveSpecialParameterForDisplay("env(" + testKey + ")")
+	result := pr.resolveSpecialParameterWithSecret("env(" + testKey + ")")
 	if result == testValue {
 		t.Error("Sensitive environment variable should be masked for display")
 	}
