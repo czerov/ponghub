@@ -33,38 +33,6 @@ func convertToHistory(logEntries []logger.HistoryEntry, displayNum int) History 
 	return history
 }
 
-// ParseLogResult converts logger.Logger data into a reporter.Reporter format.
-func ParseLogResult(logResult logger.Logger, displayNum int) Reporter {
-	var report Reporter
-	for serviceName, serviceLog := range logResult {
-		if len(serviceLog.ServiceHistory) == 0 {
-			log.Printf("No history data for service %s", serviceName)
-			continue // Skip services with no history data
-		}
-
-		// Convert logger.Endpoints to reporter.Endpoints
-		var endpoints Endpoints
-		for url, endpointLog := range serviceLog.Endpoints {
-			endpointHistory := convertToHistory(endpointLog, displayNum)
-			endpoints = append(endpoints, Endpoint{
-				URL:             url,
-				EndpointHistory: endpointHistory,
-			})
-		}
-
-		// convert logger.ServiceHistory to reporter.ServiceHistory
-		serviceHistory := convertToHistory(serviceLog.ServiceHistory, displayNum)
-
-		newService := Service{
-			Name:           serviceName,
-			ServiceHistory: serviceHistory,
-			Endpoints:      endpoints,
-		}
-		report = append(report, newService)
-	}
-	return report
-}
-
 // ParseLogResultWithOrder converts logger.Logger data into a reporter.Reporter format preserving config order
 func ParseLogResultWithOrder(logResult logger.Logger, serviceNames []string, displayNum int, cfg *configure.Configure) Reporter {
 	var report Reporter
