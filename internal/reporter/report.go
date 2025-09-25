@@ -8,51 +8,67 @@ import (
 
 	"github.com/wcy-dt/ponghub/internal/common"
 	"github.com/wcy-dt/ponghub/internal/types/structures/checker"
+	"github.com/wcy-dt/ponghub/internal/types/structures/configure"
 	"github.com/wcy-dt/ponghub/internal/types/structures/reporter"
 	"github.com/wcy-dt/ponghub/internal/types/types/chk_result"
 	"github.com/wcy-dt/ponghub/internal/types/types/default_config"
 )
 
 // GetReport generates a report based on the check results and log data
-func GetReport(checkResult []checker.Checker, logPath string, displayNum int) (reporter.Reporter, error) {
+func GetReport(checkResult []checker.Checker, logPath string, cfg *configure.Configure) (reporter.Reporter, error) {
 	logResult, err := common.ReadLogs(logPath)
 	if err != nil {
 		log.Printf("Error loading log data from %s: %v", logPath, err)
 		return nil, err
 	}
 
-	reportResult := reporter.ParseLogResult(logResult, displayNum)
+	// Extract service names in config order
+	var serviceNames []string
+	for _, service := range cfg.Services {
+		serviceNames = append(serviceNames, service.Name)
+	}
+
+	reportResult := reporter.ParseLogResultWithOrder(logResult, serviceNames, cfg.DisplayNum, cfg)
 
 	// calculate availability
-	for serviceName, serviceReport := range reportResult {
-		if len(serviceReport.ServiceHistory) == 0 {
+	for i := range reportResult {
+		if len(reportResult[i].ServiceHistory) == 0 {
 			continue
 		}
 		statusAllEntryNum := 0
-		for _, entry := range serviceReport.ServiceHistory {
+		for _, entry := range reportResult[i].ServiceHistory {
 			if chk_result.IsALL(entry.Status) {
 				statusAllEntryNum++
 			}
 		}
-		availability := float64(statusAllEntryNum) / float64(len(serviceReport.ServiceHistory))
-		tmp := reportResult[serviceName]
-		tmp.Availability = availability
-		reportResult[serviceName] = tmp
+		availability := float64(statusAllEntryNum) / float64(len(reportResult[i].ServiceHistory))
+		reportResult[i].Availability = availability
 	}
 
 	// calculate cert status
 	for _, serviceResult := range checkResult {
 		serviceName := serviceResult.Name
-		for _, endpointResult := range serviceResult.Endpoints {
-			url := endpointResult.URL
 
-			tmp := reportResult[serviceName].Endpoints[url]
-			tmp.IsHTTPS = endpointResult.IsHTTPS
-			tmp.CertRemainingDays = endpointResult.CertRemainingDays
-			tmp.IsCertExpired = endpointResult.IsCertExpired
-			tmp.DisplayURL = endpointResult.DisplayURL
-			tmp.HighlightSegments = endpointResult.HighlightSegments
-			reportResult[serviceName].Endpoints[url] = tmp
+		// Find the service in the ordered slice
+		for i := range reportResult {
+			if reportResult[i].Name == serviceName {
+				for _, endpointResult := range serviceResult.Endpoints {
+					url := endpointResult.URL
+
+					// Find the endpoint in the ordered slice and update it
+					for j := range reportResult[i].Endpoints {
+						if reportResult[i].Endpoints[j].URL == url {
+							reportResult[i].Endpoints[j].IsHTTPS = endpointResult.IsHTTPS
+							reportResult[i].Endpoints[j].CertRemainingDays = endpointResult.CertRemainingDays
+							reportResult[i].Endpoints[j].IsCertExpired = endpointResult.IsCertExpired
+							reportResult[i].Endpoints[j].DisplayURL = endpointResult.DisplayURL
+							reportResult[i].Endpoints[j].HighlightSegments = endpointResult.HighlightSegments
+							break
+						}
+					}
+				}
+				break
+			}
 		}
 	}
 

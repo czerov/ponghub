@@ -14,6 +14,7 @@ type (
 	History []HistoryEntry
 
 	Endpoint struct {
+		URL               string // Added URL field to store the endpoint URL
 		EndpointHistory   History
 		IsHTTPS           bool
 		IsCertExpired     bool
@@ -22,15 +23,17 @@ type (
 		HighlightSegments []highlight.Segment // Segments with highlight info
 	}
 
-	Endpoints map[string]Endpoint
+	// Endpoints is a slice of Endpoint
+	Endpoints []Endpoint
 
 	// Service represents the result of checking a service
 	Service struct {
+		Name           string // Added Name field to identify the service
 		ServiceHistory History
 		Availability   float64
 		Endpoints      Endpoints
 	}
 
-	// Reporter represents the result of checking services
-	Reporter map[string]Service
+	// Reporter is a slice of Service
+	Reporter []Service
 )

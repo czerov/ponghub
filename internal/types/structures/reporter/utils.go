@@ -4,6 +4,7 @@ import (
 	"log"
 	"sort"
 
+	"github.com/wcy-dt/ponghub/internal/types/structures/configure"
 	"github.com/wcy-dt/ponghub/internal/types/structures/logger"
 )
 
@@ -34,7 +35,7 @@ func convertToHistory(logEntries []logger.HistoryEntry, displayNum int) History 
 
 // ParseLogResult converts logger.Logger data into a reporter.Reporter format.
 func ParseLogResult(logResult logger.Logger, displayNum int) Reporter {
-	report := make(Reporter)
+	var report Reporter
 	for serviceName, serviceLog := range logResult {
 		if len(serviceLog.ServiceHistory) == 0 {
 			log.Printf("No history data for service %s", serviceName)
@@ -42,11 +43,75 @@ func ParseLogResult(logResult logger.Logger, displayNum int) Reporter {
 		}
 
 		// Convert logger.Endpoints to reporter.Endpoints
-		endpoints := make(Endpoints)
+		var endpoints Endpoints
 		for url, endpointLog := range serviceLog.Endpoints {
 			endpointHistory := convertToHistory(endpointLog, displayNum)
-			endpoints[url] = Endpoint{
+			endpoints = append(endpoints, Endpoint{
+				URL:             url,
 				EndpointHistory: endpointHistory,
+			})
+		}
+
+		// convert logger.ServiceHistory to reporter.ServiceHistory
+		serviceHistory := convertToHistory(serviceLog.ServiceHistory, displayNum)
+
+		newService := Service{
+			Name:           serviceName,
+			ServiceHistory: serviceHistory,
+			Endpoints:      endpoints,
+		}
+		report = append(report, newService)
+	}
+	return report
+}
+
+// ParseLogResultWithOrder converts logger.Logger data into a reporter.Reporter format preserving config order
+func ParseLogResultWithOrder(logResult logger.Logger, serviceNames []string, displayNum int, cfg *configure.Configure) Reporter {
+	var report Reporter
+
+	// Process services in the order they appear in config
+	for _, serviceName := range serviceNames {
+		serviceLog, exists := logResult[serviceName]
+		if !exists {
+			continue
+		}
+
+		if len(serviceLog.ServiceHistory) == 0 {
+			log.Printf("No history data for service %s", serviceName)
+			continue // Skip services with no history data
+		}
+
+		// Find the service config to get endpoint order
+		var serviceConfig *configure.Service
+		for _, svc := range cfg.Services {
+			if svc.Name == serviceName {
+				serviceConfig = &svc
+				break
+			}
+		}
+
+		// Convert logger.Endpoints to reporter.Endpoints preserving config order
+		var endpoints Endpoints
+		if serviceConfig != nil {
+			// Process endpoints in config order
+			for _, endpointConfig := range serviceConfig.Endpoints {
+				url := endpointConfig.URL
+				if endpointLog, exists := serviceLog.Endpoints[url]; exists {
+					endpointHistory := convertToHistory(endpointLog, displayNum)
+					endpoints = append(endpoints, Endpoint{
+						URL:             url,
+						EndpointHistory: endpointHistory,
+					})
+				}
+			}
+		} else {
+			// Fallback: if no config found, use existing endpoints (shouldn't happen normally)
+			for url, endpointLog := range serviceLog.Endpoints {
+				endpointHistory := convertToHistory(endpointLog, displayNum)
+				endpoints = append(endpoints, Endpoint{
+					URL:             url,
+					EndpointHistory: endpointHistory,
+				})
 			}
 		}
 
@@ -54,10 +119,11 @@ func ParseLogResult(logResult logger.Logger, displayNum int) Reporter {
 		serviceHistory := convertToHistory(serviceLog.ServiceHistory, displayNum)
 
 		newService := Service{
+			Name:           serviceName,
 			ServiceHistory: serviceHistory,
 			Endpoints:      endpoints,
 		}
-		report[serviceName] = newService
+		report = append(report, newService)
 	}
 	return report
 }

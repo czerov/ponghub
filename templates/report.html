@@ -89,10 +89,10 @@
     <div class="container">
         <img src="/static/logo.png" alt="Service Status Report" class="logo-img">
         <div class="update-time">Last Updated: {{.UpdateTime}}</div>
-        {{range $Name, $ServiceReport := .ReportResult}}
+        {{range $ServiceReport := .ReportResult}}
         <div class="service-block">
             <div class="service-header">
-                <h2>{{$Name}}</h2>
+                <h2>{{$ServiceReport.Name}}</h2>
                 {{ $last := index $ServiceReport.ServiceHistory (sub (len $ServiceReport.ServiceHistory) 1) }}
                 <div class="status-info status-info-{{ $last.Status }}">
                     <span class="status-ball"></span>
@@ -136,13 +136,13 @@
                     {{ end }}
                 </div>
             </div>
-            {{ range $url, $endpoint := $ServiceReport.Endpoints }}
+            {{ range $endpoint := $ServiceReport.Endpoints }}
             {{ $arr := $endpoint.EndpointHistory }}
             <div class="port-block">
                 {{ $last := index $arr (sub (len $arr) 1) }}
                 <div class="port-url status-info-{{ $last.Status }}">
                     <span class="status-ball"></span>
-                    <span class="url-text" title="{{$url}}">
+                    <span class="url-text" title="{{$endpoint.URL}}">
                         {{ if $endpoint.HighlightSegments }}
                             {{ range $endpoint.HighlightSegments }}
                                 {{ if .IsHighlight }}
@@ -154,7 +154,7 @@
                         {{ else if $endpoint.DisplayURL }}
                             {{$endpoint.DisplayURL}}
                         {{ else }}
-                            {{$url}}
+                            {{$endpoint.URL}}
                         {{ end }}
                     </span>
                     <div class="cert-status
