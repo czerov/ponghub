@@ -7,8 +7,8 @@ import (
 	"github.com/wcy-dt/ponghub/internal/types/types/chk_result"
 )
 
-// ProcessCheckResult processes the check results for a service
-func ProcessCheckResult(serviceResult checker.Checker) (map[string][]chk_result.CheckResult, map[string]string, map[string]time.Duration) {
+// processCheckResult processes the check results for a service
+func processCheckResult(serviceResult checker.Service) (map[string][]chk_result.CheckResult, map[string]string, map[string]time.Duration) {
 	urlStatusMap := make(map[string][]chk_result.CheckResult)
 	urlTimeMap := make(map[string]string)
 	urlResponseTimeMap := make(map[string]time.Duration)

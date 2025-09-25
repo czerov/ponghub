@@ -33,8 +33,8 @@ func convertToHistory(logEntries []logger.HistoryEntry, displayNum int) History 
 	return history
 }
 
-// ParseLogResultWithOrder converts logger.Logger data into a reporter.Reporter format preserving config order
-func ParseLogResultWithOrder(logResult logger.Logger, serviceNames []string, displayNum int, cfg *configure.Configure) Reporter {
+// ParseLogResult converts logger.Logger data into a reporter.Reporter format preserving config order
+func ParseLogResult(logResult logger.Logger, serviceNames []string, cfg *configure.Configure) Reporter {
 	var report Reporter
 
 	// Process services in the order they appear in config
@@ -65,7 +65,7 @@ func ParseLogResultWithOrder(logResult logger.Logger, serviceNames []string, dis
 			for _, endpointConfig := range serviceConfig.Endpoints {
 				url := endpointConfig.URL
 				if endpointLog, exists := serviceLog.Endpoints[url]; exists {
-					endpointHistory := convertToHistory(endpointLog, displayNum)
+					endpointHistory := convertToHistory(endpointLog, cfg.DisplayNum)
 					endpoints = append(endpoints, Endpoint{
 						URL:             url,
 						EndpointHistory: endpointHistory,
@@ -75,7 +75,7 @@ func ParseLogResultWithOrder(logResult logger.Logger, serviceNames []string, dis
 		} else {
 			// Fallback: if no config found, use existing endpoints (shouldn't happen normally)
 			for url, endpointLog := range serviceLog.Endpoints {
-				endpointHistory := convertToHistory(endpointLog, displayNum)
+				endpointHistory := convertToHistory(endpointLog, cfg.DisplayNum)
 				endpoints = append(endpoints, Endpoint{
 					URL:             url,
 					EndpointHistory: endpointHistory,
@@ -84,7 +84,7 @@ func ParseLogResultWithOrder(logResult logger.Logger, serviceNames []string, dis
 		}
 
 		// convert logger.ServiceHistory to reporter.ServiceHistory
-		serviceHistory := convertToHistory(serviceLog.ServiceHistory, displayNum)
+		serviceHistory := convertToHistory(serviceLog.ServiceHistory, cfg.DisplayNum)
 
 		newService := Service{
 			Name:           serviceName,

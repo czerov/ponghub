@@ -9,8 +9,8 @@ import (
 
 // Result defines the structure for the result of checking a service
 type (
-	// Checker defines the structure for the result of checking a service
-	Checker struct {
+	// Service defines the structure for the result of checking a service
+	Service struct {
 		Name       string                 `json:"name"`
 		Status     chk_result.CheckResult `json:"status"`
 		Endpoints  []Endpoint             `json:"endpoints,omitempty"`
@@ -37,8 +37,7 @@ type (
 		IsHTTPS           bool                   `json:"is_https,omitempty"`
 		CertRemainingDays int                    `json:"cert_remaining_days,omitempty"`
 		IsCertExpired     bool                   `json:"is_cert_expired,omitempty"`
-		// Highlight information for display
-		DisplayURL        string              `json:"display_url,omitempty"`
-		HighlightSegments []highlight.Segment `json:"highlight_segments,omitempty"`
+		DisplayURL        string                 `json:"display_url,omitempty"`
+		HighlightSegments []highlight.Segment    `json:"highlight_segments,omitempty"`
 	}
 )

@@ -8,56 +8,32 @@ import (
 	"github.com/wcy-dt/ponghub/internal/types/structures/logger"
 )
 
-// GetLogs writes check results to JSON file
-func GetLogs(checkResult []checker.Checker, maxLogDays int, logPath string) (logger.Logger, error) {
-	logResult, err := common.ReadLogs(logPath)
+// GetLog writes check results to JSON file
+func GetLog(currentCheckResult []checker.Service, maxLogDays int, logPath string) (logger.Logger, error) {
+	// Load existing log data
+	previousLog, err := common.ReadLogs(logPath)
 	if err != nil {
 		log.Printf("Error loading log data from %s: %v", logPath, err)
 		return nil, err
 	}
 
-	for _, serviceResult := range checkResult {
-		serviceName := serviceResult.Name
-		serviceLog, exists := logResult[serviceName]
-		if !exists {
-			serviceLog = logger.Service{
-				ServiceHistory: logger.History{},
-				Endpoints:      make(logger.Endpoints),
-			}
-		}
+	// Use filtered data for further processing
+	previousLog = common.FilterLogs(previousLog, currentCheckResult)
 
-		// Update service history
-		newServiceHistoryEntry := logger.HistoryEntry{
-			Time:   serviceResult.StartTime, // Use StartTime for the history entry
-			Status: serviceResult.Status.String(),
-		}
-		serviceLog.ServiceHistory = serviceLog.ServiceHistory.AddEntry(newServiceHistoryEntry)
-		serviceLog.ServiceHistory = serviceLog.ServiceHistory.CleanExpiredEntries(maxLogDays)
+	// Merge new check results with existing log data
+	currentLog := common.MergeLogs(previousLog, currentCheckResult, maxLogDays)
 
-		// Update port statusList
-		urlStatusMap, urlTimeMap, urlResponseTimeMap := common.ProcessCheckResult(serviceResult)
-		for url, statusList := range urlStatusMap {
-			mergedStatus := common.CalcMergedStatus(statusList)
-			newEndpointHistoryEntry := logger.HistoryEntry{
-				Time:         urlTimeMap[url],
-				Status:       mergedStatus.String(),
-				ResponseTime: int(urlResponseTimeMap[url].Milliseconds()),
-			}
+	return currentLog, nil
+}
 
-			tmp := serviceLog.Endpoints[url]
-			tmp = tmp.AddEntry(newEndpointHistoryEntry)
-			tmp = tmp.CleanExpiredEntries(maxLogDays)
-			serviceLog.Endpoints[url] = tmp
-		}
-
-		logResult[serviceName] = serviceLog
-	}
-
-	err = common.WriteLogs(logResult, logPath)
+// WriteLog writes log data to file
+func WriteLog(currentLog logger.Logger, logPath string) error {
+	// Save updated log data back to file
+	err := common.WriteLogs(currentLog, logPath)
 	if err != nil {
 		log.Printf("Error saving log data to %s: %v", logPath, err)
-		return nil, err
+		return err
 	}
 
-	return logResult, nil
+	return nil
 }

@@ -2,8 +2,8 @@ package common
 
 import "github.com/wcy-dt/ponghub/internal/types/types/chk_result"
 
-// CalcMergedStatus merges multiple statuses into a single status
-func CalcMergedStatus(statusList []chk_result.CheckResult) chk_result.CheckResult {
+// calcMergedStatus merges multiple statuses into a single status
+func calcMergedStatus(statusList []chk_result.CheckResult) chk_result.CheckResult {
 	if len(statusList) == 0 {
 		return chk_result.NONE
 	}

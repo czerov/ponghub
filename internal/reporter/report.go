@@ -15,12 +15,16 @@ import (
 )
 
 // GetReport generates a report based on the check results and log data
-func GetReport(checkResult []checker.Checker, logPath string, cfg *configure.Configure) (reporter.Reporter, error) {
-	logResult, err := common.ReadLogs(logPath)
+func GetReport(currentCheckResult []checker.Service, logPath string, cfg *configure.Configure) (reporter.Reporter, error) {
+	// Load existing log data
+	previousLog, err := common.ReadLogs(logPath)
 	if err != nil {
 		log.Printf("Error loading log data from %s: %v", logPath, err)
 		return nil, err
 	}
+
+	// Use filtered data for further processing
+	previousLog = common.FilterLogs(previousLog, currentCheckResult)
 
 	// Extract service names in config order
 	var serviceNames []string
@@ -28,9 +32,20 @@ func GetReport(checkResult []checker.Checker, logPath string, cfg *configure.Con
 		serviceNames = append(serviceNames, service.Name)
 	}
 
-	reportResult := reporter.ParseLogResultWithOrder(logResult, serviceNames, cfg.DisplayNum, cfg)
+	// Parse log data into report format
+	reportResult := reporter.ParseLogResult(previousLog, serviceNames, cfg)
 
 	// calculate availability
+	reportResult = getAvailability(reportResult)
+
+	// calculate cert status
+	reportResult = getCertStatus(reportResult, currentCheckResult)
+
+	return reportResult, nil
+}
+
+// getAvailability calculates and updates the availability for each service in the report
+func getAvailability(reportResult reporter.Reporter) reporter.Reporter {
 	for i := range reportResult {
 		if len(reportResult[i].ServiceHistory) == 0 {
 			continue
@@ -45,8 +60,12 @@ func GetReport(checkResult []checker.Checker, logPath string, cfg *configure.Con
 		reportResult[i].Availability = availability
 	}
 
-	// calculate cert status
-	for _, serviceResult := range checkResult {
+	return reportResult
+}
+
+// getCertStatus updates the report with certificate status from the current check results
+func getCertStatus(reportResult reporter.Reporter, currentCheckResult []checker.Service) reporter.Reporter {
+	for _, serviceResult := range currentCheckResult {
 		serviceName := serviceResult.Name
 
 		// Find the service in the ordered slice
@@ -72,11 +91,12 @@ func GetReport(checkResult []checker.Checker, logPath string, cfg *configure.Con
 		}
 	}
 
-	return reportResult, nil
+	return reportResult
 }
 
 // WriteReport generates an HTML report from the provided log data
 func WriteReport(reportResult reporter.Reporter, reportPath string, displayNum int) error {
+	// Parse the HTML template
 	tmpl, err := template.New("report.html").
 		Funcs(createTemplateFunc()).
 		ParseFiles(default_config.GetTemplatePath())
@@ -84,6 +104,7 @@ func WriteReport(reportResult reporter.Reporter, reportPath string, displayNum i
 		return fmt.Errorf("template parsing failed: %w", err)
 	}
 
+	// Create or truncate the report file
 	reportFile, err := os.Create(reportPath)
 	if err != nil {
 		return fmt.Errorf("file creation failed: %w", err)
@@ -94,6 +115,7 @@ func WriteReport(reportResult reporter.Reporter, reportPath string, displayNum i
 		}
 	}(reportFile)
 
+	// Execute the template with the log data
 	if err := tmpl.Execute(reportFile, map[string]any{
 		"ReportResult": reportResult,
 		"UpdateTime":   getLatestTime(reportResult),

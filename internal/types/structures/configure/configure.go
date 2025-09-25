@@ -11,13 +11,12 @@ type (
 
 	// Endpoint defines the configuration for a port
 	Endpoint struct {
-		URL           string            `yaml:"url"`
-		Method        string            `yaml:"method,omitempty"`
-		Headers       map[string]string `yaml:"headers,omitempty"`
-		Body          string            `yaml:"body,omitempty"`
-		StatusCode    int               `yaml:"status_code,omitempty"`
-		ResponseRegex string            `yaml:"response_regex,omitempty"`
-		// Original template values for display
+		URL                   string            `yaml:"url"`
+		Method                string            `yaml:"method,omitempty"`
+		Headers               map[string]string `yaml:"headers,omitempty"`
+		Body                  string            `yaml:"body,omitempty"`
+		StatusCode            int               `yaml:"status_code,omitempty"`
+		ResponseRegex         string            `yaml:"response_regex,omitempty"`
 		OriginalURL           string            `yaml:"-"`
 		OriginalBody          string            `yaml:"-"`
 		OriginalResponseRegex string            `yaml:"-"`
