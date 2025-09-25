@@ -40,11 +40,11 @@ func FilterLogs(previousLog logger.Logger, currentCheckResult []checker.Service)
 	filteredPreviousLogs := make(logger.Logger)
 
 	// Create maps for quick lookup of existing services and endpoints
-	existingServices, existingEndpoints := getMapOfExistingServicesAndEndpoints(currentCheckResult)
+	currentServices, currentEndpoints := getMapOfCurrentServicesAndEndpoints(currentCheckResult)
 
 	// Filter the log data
 	for serviceName, serviceLog := range previousLog {
-		if existingServices[serviceName] {
+		if currentServices[serviceName] {
 			filteredPreviousLog := logger.Service{
 				ServiceHistory: serviceLog.ServiceHistory,
 				Endpoints:      make(logger.Endpoints),
@@ -52,7 +52,7 @@ func FilterLogs(previousLog logger.Logger, currentCheckResult []checker.Service)
 
 			// Filter endpoints for this service
 			for endpointURL, endpointHistory := range serviceLog.Endpoints {
-				if existingEndpoints[serviceName][endpointURL] {
+				if currentEndpoints[serviceName][endpointURL] {
 					filteredPreviousLog.Endpoints[endpointURL] = endpointHistory
 				}
 			}
@@ -67,21 +67,21 @@ func FilterLogs(previousLog logger.Logger, currentCheckResult []checker.Service)
 	return filteredPreviousLogs
 }
 
-// getMapOfExistingServicesAndEndpoints creates maps for quick lookup of existing services and endpoints
-func getMapOfExistingServicesAndEndpoints(currentCheckResult []checker.Service) (map[string]bool, map[string]map[string]bool) {
+// getMapOfCurrentServicesAndEndpoints creates maps for quick lookup of existing services and endpoints
+func getMapOfCurrentServicesAndEndpoints(currentCheckResult []checker.Service) (map[string]bool, map[string]map[string]bool) {
 	// Create maps for quick lookup of existing services and endpoints
-	existingServices := make(map[string]bool)
-	existingEndpoints := make(map[string]map[string]bool) // serviceName -> endpoint URL -> exists
+	currentServices := make(map[string]bool)
+	currentEndpoints := make(map[string]map[string]bool) // serviceName -> endpoint URL -> exists
 
 	for _, serviceResult := range currentCheckResult {
-		existingServices[serviceResult.Name] = true
-		existingEndpoints[serviceResult.Name] = make(map[string]bool)
+		currentServices[serviceResult.Name] = true
+		currentEndpoints[serviceResult.Name] = make(map[string]bool)
 		for _, endpoint := range serviceResult.Endpoints {
-			existingEndpoints[serviceResult.Name][endpoint.URL] = true
+			currentEndpoints[serviceResult.Name][endpoint.URL] = true
 		}
 	}
 
-	return existingServices, existingEndpoints
+	return currentServices, currentEndpoints
 }
 
 // MergeLogs merges previous log data with current check results and cleans up old entries
