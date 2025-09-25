@@ -12,14 +12,10 @@ import (
 func isTestMode() bool {
 	// Check if any command line arguments contain "test"
 	for _, arg := range os.Args {
-		if strings.Contains(arg, "test") || strings.Contains(arg, ".test") {
+		// Check for Go test flags (e.g., -test.v, -test.run, etc.)
+		if strings.HasPrefix(arg, "-test.") {
 			return true
 		}
-	}
-
-	// Check if we're running with go test
-	if len(os.Args) > 0 && strings.HasSuffix(os.Args[0], ".test") {
-		return true
 	}
 
 	return false

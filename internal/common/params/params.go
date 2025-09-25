@@ -210,9 +210,6 @@ func (pr *ParameterResolver) maskSensitiveValue(value string) string {
 
 	// Show first 1 and last 1 character, mask the middle
 	visible := 1
-	if len(value) < 8 {
-		visible = 1
-	}
 
 	prefix := value[:visible]
 	suffix := value[len(value)-visible:]
