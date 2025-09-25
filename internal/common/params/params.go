@@ -180,15 +180,15 @@ func (pr *ParameterResolver) resolveSpecialParameter(param string) string {
 	}
 }
 
-// resolveSpecialParameterForDisplay resolves parameters for display with sensitive data masking
-func (pr *ParameterResolver) resolveSpecialParameterForDisplay(param string) string {
+// resolveSpecialParameterWithSecret resolves parameters for display with sensitive data masking
+func (pr *ParameterResolver) resolveSpecialParameterWithSecret(param string) string {
 	// Handle different types of special parameters
 	switch {
-	// Environment variables - mask sensitive values
+	// Environment variables
 	case strings.HasPrefix(param, "env(") && strings.HasSuffix(param, ")"):
 		envVar := param[4 : len(param)-1]
 		if value := os.Getenv(envVar); value != "" {
-			return pr.maskSensitiveValue(value, envVar)
+			return pr.maskSensitiveValue(value)
 		}
 		return ""
 
@@ -198,41 +198,18 @@ func (pr *ParameterResolver) resolveSpecialParameterForDisplay(param string) str
 	}
 }
 
-// maskSensitiveValue masks sensitive environment variable values
-func (pr *ParameterResolver) maskSensitiveValue(value, envVar string) string {
-	envVarLower := strings.ToLower(envVar)
-
-	// Check if this environment variable name suggests it contains sensitive data
-	for _, pattern := range SensitivePatterns {
-		if strings.Contains(envVarLower, pattern) {
-			return pr.maskValue(value)
-		}
-	}
-
-	// If value looks like a token/key (long alphanumeric string), mask it
-	if len(value) > 20 && regexp.MustCompile(`^[a-zA-Z0-9+/=-]+$`).MatchString(value) {
-		return pr.maskValue(value)
-	}
-
-	// Return original value if not considered sensitive
-	return value
-}
-
-// maskValue creates a masked version of a sensitive value
-func (pr *ParameterResolver) maskValue(value string) string {
+// maskSensitiveValue creates a masked version of a sensitive value
+func (pr *ParameterResolver) maskSensitiveValue(value string) string {
 	if len(value) == 0 {
 		return value
 	}
 
-	if len(value) <= 4 {
+	if len(value) <= 6 {
 		return strings.Repeat("*", len(value))
 	}
 
-	// Show first 2 and last 2 characters, mask the middle
-	visible := 2
-	if len(value) < 8 {
-		visible = 1
-	}
+	// Show first 1 and last 1 character, mask the middle
+	visible := 1
 
 	prefix := value[:visible]
 	suffix := value[len(value)-visible:]
@@ -359,7 +336,7 @@ func (pr *ParameterResolver) HighlightChanges(originalURL string) (string, []hig
 			resolved = pr.formatTimeWithPattern(param)
 		} else {
 			// Use display version with masking for environment variables
-			resolved = pr.resolveSpecialParameterForDisplay(param)
+			resolved = pr.resolveSpecialParameterWithSecret(param)
 		}
 
 		result += resolved

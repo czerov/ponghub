@@ -39,26 +39,6 @@ var HTTPMethods = []string{
 	"OPTIONS",
 }
 
-// SensitivePatterns Sensitive environment variable patterns for masking
-var SensitivePatterns = []string{
-	"key",
-	"secret",
-	"token",
-	"password",
-	"pass",
-	"pwd",
-	"auth",
-	"credential",
-	"private",
-	"api_key",
-	"access",
-	"jwt",
-	"bearer",
-	"signature",
-	"hash",
-	"salt",
-}
-
 // UserAgents User agent strings for random user agent generation
 var UserAgents = LoadUserAgents()
 
