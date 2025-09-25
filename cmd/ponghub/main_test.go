@@ -31,14 +31,26 @@ func TestMain_append(t *testing.T) {
 
 	// check services based on the configuration
 	checkResult := checker.CheckServices(cfg)
+
+	// write notifications based on the check results
 	notifier.WriteNotifications(checkResult, cfg.CertNotifyDays)
-	_, err = logger.GetLogs(checkResult, cfg.MaxLogDays, tmpLogPath)
+
+	// get and write log results
+	logResult, err := logger.GetLog(checkResult, cfg.MaxLogDays, tmpLogPath)
 	if err != nil {
 		log.Fatalln("Error outputting checkResult:", err)
 	}
+	if err := logger.WriteLog(logResult, tmpLogPath); err != nil {
+		log.Fatalln("Error writing logs to", tmpLogPath, ":", err)
+	} else {
+		log.Println("Logs written to", tmpLogPath)
+	}
 
 	// generate the report based on the checkResult
-	reportResult, err := reporter.GetReport(checkResult, tmpLogPath, cfg.DisplayNum)
+	reportResult, err := reporter.GetReport(checkResult, tmpLogPath, cfg)
+	if err != nil {
+		log.Fatalln("Error generating report data:", err)
+	}
 	if err := reporter.WriteReport(reportResult, default_config.GetReportPath(), cfg.DisplayNum); err != nil {
 		log.Fatalln("Error generating report:", err)
 	} else {
@@ -61,14 +73,26 @@ func TestMain_new(t *testing.T) {
 
 	// check services based on the configuration
 	checkResult := checker.CheckServices(cfg)
+
+	// write notifications based on the check results
 	notifier.WriteNotifications(checkResult, cfg.CertNotifyDays)
-	_, err = logger.GetLogs(checkResult, cfg.MaxLogDays, tmpLogPath)
+
+	// get and write log results
+	logResult, err := logger.GetLog(checkResult, cfg.MaxLogDays, tmpLogPath)
 	if err != nil {
 		log.Fatalln("Error outputting checkResult:", err)
 	}
+	if err := logger.WriteLog(logResult, tmpLogPath); err != nil {
+		log.Fatalln("Error writing logs to", tmpLogPath, ":", err)
+	} else {
+		log.Println("Logs written to", tmpLogPath)
+	}
 
 	// generate the report based on the checkResult
-	reportResult, err := reporter.GetReport(checkResult, tmpLogPath, cfg.DisplayNum)
+	reportResult, err := reporter.GetReport(checkResult, tmpLogPath, cfg)
+	if err != nil {
+		log.Fatalln("Error generating report data:", err)
+	}
 	if err := reporter.WriteReport(reportResult, default_config.GetReportPath(), cfg.DisplayNum); err != nil {
 		log.Fatalln("Error generating report:", err)
 	} else {

@@ -28,31 +28,31 @@ func checkEndpoint(cfg *configure.Endpoint, timeout int, maxRetryTimes int, serv
 	maxResponseTime := time.Duration(0)
 
 	// SSL certificate related variables
-	urlIsHTTPS := isHTTPS(cfg.URL)
+	urlIsHTTPS := isHTTPS(cfg.ParsedURL)
 	certRemainingDays := 0
 	isCertExpired := false
 
 	// Generate display URL for smart showing of template vs resolved URL
 	resolver := params.NewParameterResolver()
-	displayURL, highlightSegments := resolver.HighlightChanges(cfg.OriginalURL)
-	originalURL := cfg.OriginalURL
+	displayURL, highlightSegments := resolver.HighlightChanges(cfg.URL)
+	originalURL := cfg.URL
 	if originalURL == "" {
-		originalURL = cfg.URL
-		displayURL = cfg.URL
+		originalURL = cfg.ParsedURL
+		displayURL = cfg.ParsedURL
 		highlightSegments = nil
 	}
 
 	// Check SSL certificate if it's an HTTPS URL
 	if urlIsHTTPS {
-		remainingDays, expired, err := checkSSLCertificates(cfg.URL)
+		remainingDays, expired, err := checkSSLCertificates(cfg.ParsedURL)
 		if err != nil {
 			urlIsHTTPS = false
-			log.Printf("SSL certificate check failed for %s: %v", cfg.URL, err)
+			log.Printf("SSL certificate check failed for %s: %v", cfg.ParsedURL, err)
 			failureDetails = append(failureDetails, fmt.Sprintf("SSL Certificate Error: %s", err.Error()))
 		} else {
 			certRemainingDays = remainingDays
 			isCertExpired = expired
-			log.Printf("SSL Certificate Info for %s: %d days remaining, expired: %v", cfg.URL, remainingDays, expired)
+			log.Printf("SSL Certificate Info for %s: %d days remaining, expired: %v", cfg.ParsedURL, remainingDays, expired)
 		}
 	}
 
@@ -62,21 +62,22 @@ func checkEndpoint(cfg *configure.Endpoint, timeout int, maxRetryTimes int, serv
 		client := &http.Client{
 			Timeout: time.Duration(timeout) * time.Second,
 		}
+		// TODO: Hide secrets in logs
 		log.Printf("[%s] %s %s (attempt %d/%d)\n",
-			serviceName, httpMethod, cfg.URL, currentAttemptNum+1, maxRetryTimes)
+			serviceName, httpMethod, cfg.ParsedURL, currentAttemptNum+1, maxRetryTimes)
 
 		// build the request
-		req, err := http.NewRequest(httpMethod, cfg.URL, nil)
+		req, err := http.NewRequest(httpMethod, cfg.ParsedURL, nil)
 		if err != nil {
 			failureDetails = append(failureDetails, fmt.Sprintf("StatusCode: N/A, Error: %s", err.Error()))
 			log.Printf("FAILED - Error: %s", err.Error())
 			continue
 		}
-		for headerName, headerValue := range cfg.Headers {
+		for headerName, headerValue := range cfg.ParsedHeaders {
 			req.Header.Set(headerName, headerValue)
 		}
-		if cfg.Body != "" {
-			req.Body = io.NopCloser(strings.NewReader(cfg.Body))
+		if cfg.ParsedBody != "" {
+			req.Body = io.NopCloser(strings.NewReader(cfg.ParsedBody))
 		}
 
 		// get the response
@@ -93,7 +94,8 @@ func checkEndpoint(cfg *configure.Endpoint, timeout int, maxRetryTimes int, serv
 			failureDetails = append(failureDetails, fmt.Sprintf("StatusCode: %d, Error: %s", resp.StatusCode, err.Error()))
 			log.Printf("FAILED - StatusCode: %d, Error: %s", resp.StatusCode, err.Error())
 			if err := resp.Body.Close(); err != nil {
-				log.Printf("Error closing response body for %s: %v", cfg.URL, err)
+				// TODO: Hide secrets in logs
+				log.Printf("Error closing response body for %s: %v", cfg.ParsedURL, err)
 			}
 			continue
 		}
@@ -109,16 +111,19 @@ func checkEndpoint(cfg *configure.Endpoint, timeout int, maxRetryTimes int, serv
 			}
 			responseBody = ""
 			if err := resp.Body.Close(); err != nil {
-				log.Printf("Error closing response body for %s: %v", cfg.URL, err)
+				// TODO: Hide secrets in logs
+				log.Printf("Error closing response body for %s: %v", cfg.ParsedURL, err)
 			}
+			// TODO: Hide secrets in logs
 			log.Printf("SUCCESS - %s %s (attempt %d/%d) - Response Time: %d ms, Status Code: %d",
-				httpMethod, cfg.URL, currentAttemptNum+1, maxRetryTimes, responseTime.Milliseconds(), resp.StatusCode)
+				httpMethod, cfg.ParsedURL, currentAttemptNum+1, maxRetryTimes, responseTime.Milliseconds(), resp.StatusCode)
 			break
 		}
 		failureDetails = append(failureDetails, fmt.Sprintf("StatusCode or ResponseRegex mismatch: %d", resp.StatusCode))
 		log.Printf("FAILED - StatusCode or ResponseRegex mismatch: %d", resp.StatusCode)
 		if err := resp.Body.Close(); err != nil {
-			log.Printf("Error closing response body for %s: %v", cfg.URL, err)
+			// TODO: Hide secrets in logs
+			log.Printf("Error closing response body for %s: %v", cfg.ParsedURL, err)
 		}
 	}
 	endTime := time.Now()

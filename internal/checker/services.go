@@ -9,8 +9,8 @@ import (
 )
 
 // CheckServices checks all services defined in the configuration
-func CheckServices(cfg *configure.Configure) []checker.Checker {
-	var checkResult []checker.Checker
+func CheckServices(cfg *configure.Configure) []checker.Service {
+	var checkResult []checker.Service
 	for _, service := range cfg.Services {
 		attemptNum := 0
 		successNum := 0
@@ -32,7 +32,7 @@ func CheckServices(cfg *configure.Configure) []checker.Checker {
 		}
 		endTime := time.Now()
 
-		serviceResult := checker.Checker{
+		serviceResult := checker.Service{
 			Name:       service.Name,
 			Status:     getTestResult(onlineEndpointNum, endpointNum),
 			Endpoints:  endpointResults,

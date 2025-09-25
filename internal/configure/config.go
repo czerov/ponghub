@@ -11,52 +11,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// setDefaultConfigs sets default values for the configuration fields
-func setDefaultConfigs(cfg *configure.Configure) {
-	default_config.SetDefaultTimeout(&cfg.Timeout)
-	default_config.SetDefaultMaxRetryTimes(&cfg.MaxRetryTimes)
-	default_config.SetDefaultMaxLogDays(&cfg.MaxLogDays)
-	default_config.SetDefaultCertNotifyDays(&cfg.CertNotifyDays)
-	default_config.SetDefaultDisplayNum(&cfg.DisplayNum)
-
-	for i := range cfg.Services {
-		default_config.SetDefaultTimeout(&cfg.Services[i].Timeout)
-		default_config.SetDefaultMaxRetryTimes(&cfg.Services[i].MaxRetryTimes)
-	}
-}
-
-// resolveConfigParameters resolves dynamic parameters in configuration
-func resolveConfigParameters(cfg *configure.Configure) {
-	resolver := params.NewParameterResolver()
-
-	for i := range cfg.Services {
-		for j := range cfg.Services[i].Endpoints {
-			endpoint := &cfg.Services[i].Endpoints[j]
-
-			// Save original template values
-			endpoint.OriginalURL = endpoint.URL
-			endpoint.OriginalBody = endpoint.Body
-			endpoint.OriginalResponseRegex = endpoint.ResponseRegex
-			if endpoint.Headers != nil {
-				endpoint.OriginalHeaders = make(map[string]string)
-				for key, value := range endpoint.Headers {
-					endpoint.OriginalHeaders[key] = value
-				}
-			}
-
-			// Resolve parameters
-			endpoint.URL = resolver.ResolveParameters(endpoint.URL)
-			endpoint.Body = resolver.ResolveParameters(endpoint.Body)
-			endpoint.ResponseRegex = resolver.ResolveParameters(endpoint.ResponseRegex)
-
-			// Resolve headers
-			for key, value := range endpoint.Headers {
-				endpoint.Headers[key] = resolver.ResolveParameters(value)
-			}
-		}
-	}
-}
-
 // ReadConfigs loads the configuration from a YAML file at the specified path
 func ReadConfigs(path string) (*configure.Configure, error) {
 	// Read the configuration file
@@ -87,4 +41,40 @@ func ReadConfigs(path string) (*configure.Configure, error) {
 		log.Fatalln("No services defined in the configuration file")
 	}
 	return cfg, nil
+}
+
+// resolveConfigParameters resolves dynamic parameters in configuration
+func resolveConfigParameters(cfg *configure.Configure) {
+	resolver := params.NewParameterResolver()
+
+	for i := range cfg.Services {
+		for j := range cfg.Services[i].Endpoints {
+			endpoint := &cfg.Services[i].Endpoints[j]
+
+			// Resolve parameters
+			endpoint.ParsedURL = resolver.ResolveParameters(endpoint.URL)
+			endpoint.ParsedBody = resolver.ResolveParameters(endpoint.Body)
+			endpoint.ParsedResponseRegex = resolver.ResolveParameters(endpoint.ResponseRegex)
+			if endpoint.Headers != nil {
+				endpoint.ParsedHeaders = make(map[string]string)
+				for key, value := range endpoint.Headers {
+					endpoint.ParsedHeaders[key] = resolver.ResolveParameters(value)
+				}
+			}
+		}
+	}
+}
+
+// setDefaultConfigs sets default values for the configuration fields
+func setDefaultConfigs(cfg *configure.Configure) {
+	default_config.SetDefaultTimeout(&cfg.Timeout)
+	default_config.SetDefaultMaxRetryTimes(&cfg.MaxRetryTimes)
+	default_config.SetDefaultMaxLogDays(&cfg.MaxLogDays)
+	default_config.SetDefaultCertNotifyDays(&cfg.CertNotifyDays)
+	default_config.SetDefaultDisplayNum(&cfg.DisplayNum)
+
+	for i := range cfg.Services {
+		default_config.SetDefaultTimeout(&cfg.Services[i].Timeout)
+		default_config.SetDefaultMaxRetryTimes(&cfg.Services[i].MaxRetryTimes)
+	}
 }

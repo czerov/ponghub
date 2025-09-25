@@ -4,6 +4,7 @@ import (
 	"log"
 	"sort"
 
+	"github.com/wcy-dt/ponghub/internal/types/structures/configure"
 	"github.com/wcy-dt/ponghub/internal/types/structures/logger"
 )
 
@@ -32,32 +33,65 @@ func convertToHistory(logEntries []logger.HistoryEntry, displayNum int) History 
 	return history
 }
 
-// ParseLogResult converts logger.Logger data into a reporter.Reporter format.
-func ParseLogResult(logResult logger.Logger, displayNum int) Reporter {
-	report := make(Reporter)
-	for serviceName, serviceLog := range logResult {
+// ParseLogResult converts logger.Logger data into a reporter.Reporter format preserving config order
+func ParseLogResult(logResult logger.Logger, serviceNames []string, cfg *configure.Configure) Reporter {
+	var report Reporter
+
+	// Process services in the order they appear in config
+	for _, serviceName := range serviceNames {
+		serviceLog, exists := logResult[serviceName]
+		if !exists {
+			continue
+		}
+
 		if len(serviceLog.ServiceHistory) == 0 {
 			log.Printf("No history data for service %s", serviceName)
 			continue // Skip services with no history data
 		}
 
-		// Convert logger.Endpoints to reporter.Endpoints
-		endpoints := make(Endpoints)
-		for url, endpointLog := range serviceLog.Endpoints {
-			endpointHistory := convertToHistory(endpointLog, displayNum)
-			endpoints[url] = Endpoint{
-				EndpointHistory: endpointHistory,
+		// Find the service config to get endpoint order
+		var serviceConfig *configure.Service
+		for _, svc := range cfg.Services {
+			if svc.Name == serviceName {
+				serviceConfig = &svc
+				break
+			}
+		}
+
+		// Convert logger.Endpoints to reporter.Endpoints preserving config order
+		var endpoints Endpoints
+		if serviceConfig != nil {
+			// Process endpoints in config order
+			for _, endpointConfig := range serviceConfig.Endpoints {
+				url := endpointConfig.URL
+				if endpointLog, exists := serviceLog.Endpoints[url]; exists {
+					endpointHistory := convertToHistory(endpointLog, cfg.DisplayNum)
+					endpoints = append(endpoints, Endpoint{
+						URL:             url,
+						EndpointHistory: endpointHistory,
+					})
+				}
+			}
+		} else {
+			// Fallback: if no config found, use existing endpoints (shouldn't happen normally)
+			for url, endpointLog := range serviceLog.Endpoints {
+				endpointHistory := convertToHistory(endpointLog, cfg.DisplayNum)
+				endpoints = append(endpoints, Endpoint{
+					URL:             url,
+					EndpointHistory: endpointHistory,
+				})
 			}
 		}
 
 		// convert logger.ServiceHistory to reporter.ServiceHistory
-		serviceHistory := convertToHistory(serviceLog.ServiceHistory, displayNum)
+		serviceHistory := convertToHistory(serviceLog.ServiceHistory, cfg.DisplayNum)
 
 		newService := Service{
+			Name:           serviceName,
 			ServiceHistory: serviceHistory,
 			Endpoints:      endpoints,
 		}
-		report[serviceName] = newService
+		report = append(report, newService)
 	}
 	return report
 }

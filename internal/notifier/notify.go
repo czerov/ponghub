@@ -10,7 +10,7 @@ import (
 )
 
 // WriteNotifications sends notifications based on the service check results
-func WriteNotifications(checkResult []checker.Checker, certNotifyDays int) {
+func WriteNotifications(checkResult []checker.Service, certNotifyDays int) {
 	// find all endpoints with status NONE
 	statusNoneEndpoints := make(map[string][]string)
 	for _, serviceResult := range checkResult {
@@ -20,6 +20,7 @@ func WriteNotifications(checkResult []checker.Checker, certNotifyDays int) {
 			}
 		}
 	}
+
 	// find all endpoints whose certificates are expired or has less than 7 days remaining
 	certProblemEndpoints := make(map[string][]string)
 	for _, serviceResult := range checkResult {
@@ -40,6 +41,7 @@ func WriteNotifications(checkResult []checker.Checker, certNotifyDays int) {
 		// if no endpointURLs are down, do nothing
 		return
 	}
+
 	// new notify file
 	f, err := os.Create(notifyPath)
 	if err != nil {
@@ -51,6 +53,8 @@ func WriteNotifications(checkResult []checker.Checker, certNotifyDays int) {
 			log.Println("Error closing notify file:", err)
 		}
 	}()
+
+	// write none status endpoints to file
 	for serviceName, endpointURLs := range statusNoneEndpoints {
 		if _, err := f.WriteString(serviceName + "\n"); err != nil {
 			log.Println("Error writing to notify file:", err)
@@ -63,6 +67,8 @@ func WriteNotifications(checkResult []checker.Checker, certNotifyDays int) {
 			}
 		}
 	}
+
+	// write cert problem endpoints to file
 	for serviceName, endpointURLs := range certProblemEndpoints {
 		if _, err := f.WriteString(serviceName + "\n"); err != nil {
 			log.Println("Error writing to notify file:", err)
