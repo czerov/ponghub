@@ -21,8 +21,9 @@ func main() {
 	// check services based on the configuration
 	checkResult := checker.CheckServices(cfg)
 
-	// write notifications based on the check results
+	// notify the result
 	notifier.WriteNotifications(checkResult, cfg.CertNotifyDays)
+	notifier.SendNotifications(checkResult, cfg.CertNotifyDays, cfg.Notifications)
 
 	// get and write log results
 	logResult, err := logger.GetLog(checkResult, cfg.MaxLogDays, default_config.GetLogPath())

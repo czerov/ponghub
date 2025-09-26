@@ -17,65 +17,37 @@ import (
 
 // TestMain_append tests the main functionality when appending to an existing log file.
 func TestMain_append(t *testing.T) {
-	// load the default configuration
-	cfg, err := configure.ReadConfigs(default_config.GetConfigPath())
-	if err != nil {
-		log.Fatalln("Error loading config at", default_config.GetConfigPath(), ":", err)
-	}
-
-	// copy log file to a temporary location for testing
-	logPath := default_config.GetLogPath()
-	if err := copyLogFile(logPath, tmpLogPath); err != nil {
-		log.Fatalln("Error copying log file:", err)
-	}
-
-	// check services based on the configuration
-	checkResult := checker.CheckServices(cfg)
-
-	// write notifications based on the check results
-	notifier.WriteNotifications(checkResult, cfg.CertNotifyDays)
-
-	// get and write log results
-	logResult, err := logger.GetLog(checkResult, cfg.MaxLogDays, tmpLogPath)
-	if err != nil {
-		log.Fatalln("Error outputting checkResult:", err)
-	}
-	if err := logger.WriteLog(logResult, tmpLogPath); err != nil {
-		log.Fatalln("Error writing logs to", tmpLogPath, ":", err)
-	} else {
-		log.Println("Logs written to", tmpLogPath)
-	}
-
-	// generate the report based on the checkResult
-	reportResult, err := reporter.GetReport(checkResult, tmpLogPath, cfg)
-	if err != nil {
-		log.Fatalln("Error generating report data:", err)
-	}
-	if err := reporter.WriteReport(reportResult, default_config.GetReportPath(), cfg.DisplayNum); err != nil {
-		log.Fatalln("Error generating report:", err)
-	} else {
-		log.Println("Report generated at", default_config.GetReportPath())
-	}
-
-	// Remove the temporary log file after tests
-	if err := os.Remove(tmpLogPath); err != nil {
-		log.Println("Error removing temporary log file:", err)
-	}
+	runMainFunctionality(true)
 }
 
 // TestMain_new tests the main functionality when creating a new log file.
 func TestMain_new(t *testing.T) {
+	runMainFunctionality(false)
+}
+
+// runMainFunctionality runs the main functionality for testing purposes.
+// If copyExistingLog is true, it copies the existing log file to a temporary location.
+func runMainFunctionality(copyExistingLog bool) {
 	// load the default configuration
 	cfg, err := configure.ReadConfigs(default_config.GetConfigPath())
 	if err != nil {
 		log.Fatalln("Error loading config at", default_config.GetConfigPath(), ":", err)
 	}
 
+	// copy log file to a temporary location for testing (only if copyExistingLog is true)
+	if copyExistingLog {
+		logPath := default_config.GetLogPath()
+		if err := copyLogFile(logPath, tmpLogPath); err != nil {
+			log.Fatalln("Error copying log file:", err)
+		}
+	}
+
 	// check services based on the configuration
 	checkResult := checker.CheckServices(cfg)
 
-	// write notifications based on the check results
+	// notify the result
 	notifier.WriteNotifications(checkResult, cfg.CertNotifyDays)
+	notifier.SendNotifications(checkResult, cfg.CertNotifyDays, cfg.Notifications)
 
 	// get and write log results
 	logResult, err := logger.GetLog(checkResult, cfg.MaxLogDays, tmpLogPath)
