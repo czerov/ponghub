@@ -5,6 +5,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/wcy-dt/ponghub/internal/notifier/channels"
 	"github.com/wcy-dt/ponghub/internal/types/structures/configure"
 )
 
@@ -30,7 +31,7 @@ func NewNotificationManager(config *configure.NotificationConfig) *NotificationM
 			Methods: []string{"default"},
 			Default: defaultConfig,
 		}
-		manager.services = append(manager.services, NewDefaultNotifier(defaultConfig))
+		manager.services = append(manager.services, channels.NewDefaultNotifier(defaultConfig))
 		return manager
 	}
 
@@ -46,7 +47,7 @@ func NewNotificationManager(config *configure.NotificationConfig) *NotificationM
 			config.Default = &configure.DefaultConfig{Enabled: true}
 		}
 		config.Methods = []string{"default"}
-		manager.services = append(manager.services, NewDefaultNotifier(config.Default))
+		manager.services = append(manager.services, channels.NewDefaultNotifier(config.Default))
 		return manager
 	}
 
@@ -57,30 +58,30 @@ func NewNotificationManager(config *configure.NotificationConfig) *NotificationM
 			if config.Default == nil {
 				config.Default = &configure.DefaultConfig{Enabled: true}
 			}
-			manager.services = append(manager.services, NewDefaultNotifier(config.Default))
+			manager.services = append(manager.services, channels.NewDefaultNotifier(config.Default))
 		case "email":
 			if config.Email != nil {
-				manager.services = append(manager.services, NewEmailNotifier(config.Email))
+				manager.services = append(manager.services, channels.NewEmailNotifier(config.Email))
 			}
 		case "discord":
 			if config.Discord != nil {
-				manager.services = append(manager.services, NewDiscordNotifier(config.Discord))
+				manager.services = append(manager.services, channels.NewDiscordNotifier(config.Discord))
 			}
 		case "slack":
 			if config.Slack != nil {
-				manager.services = append(manager.services, NewSlackNotifier(config.Slack))
+				manager.services = append(manager.services, channels.NewSlackNotifier(config.Slack))
 			}
 		case "telegram":
 			if config.Telegram != nil {
-				manager.services = append(manager.services, NewTelegramNotifier(config.Telegram))
+				manager.services = append(manager.services, channels.NewTelegramNotifier(config.Telegram))
 			}
 		case "wechat":
 			if config.WeChat != nil {
-				manager.services = append(manager.services, NewWeChatNotifier(config.WeChat))
+				manager.services = append(manager.services, channels.NewWeChatNotifier(config.WeChat))
 			}
 		case "webhook":
 			if config.Webhook != nil {
-				manager.services = append(manager.services, NewWebhookNotifier(config.Webhook))
+				manager.services = append(manager.services, channels.NewWebhookNotifier(config.Webhook))
 			}
 		default:
 			log.Printf("Unknown notification method: %s", method)

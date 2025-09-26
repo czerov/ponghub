@@ -13,6 +13,11 @@ import (
 	"github.com/wcy-dt/ponghub/internal/types/types/default_config"
 )
 
+// NotificationService defines the interface for notification services
+type NotificationService interface {
+	Send(title, message string) error
+}
+
 // WriteNotifications sends notifications based on the service check results
 func WriteNotifications(checkResult []checker.Service, certNotifyDays int) {
 	statusNoneEndpoints := collectUnavailableEndpoints(checkResult)

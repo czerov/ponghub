@@ -38,11 +38,14 @@ type (
 
 	// EmailConfig defines email notification settings
 	EmailConfig struct {
-		SMTPHost string   `yaml:"smtp_host"`
-		SMTPPort int      `yaml:"smtp_port"`
-		From     string   `yaml:"from"`
-		To       []string `yaml:"to"`
-		Subject  string   `yaml:"subject,omitempty"`
+		SMTPHost    string   `yaml:"smtp_host"`
+		SMTPPort    int      `yaml:"smtp_port"`
+		From        string   `yaml:"from"`
+		To          []string `yaml:"to"`
+		Subject     string   `yaml:"subject,omitempty"`
+		UseTLS      bool     `yaml:"use_tls,omitempty"`      // Enable TLS encryption
+		UseStartTLS bool     `yaml:"use_starttls,omitempty"` // Enable STARTTLS
+		SkipVerify  bool     `yaml:"skip_verify,omitempty"`  // Skip TLS certificate verification (insecure)
 	}
 
 	// DiscordConfig defines Discord webhook notification settings

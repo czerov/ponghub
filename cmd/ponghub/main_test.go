@@ -15,6 +15,16 @@ import (
 	"github.com/wcy-dt/ponghub/internal/types/types/default_config"
 )
 
+// TestMain_append tests the main functionality when appending to an existing log file.
+func TestMain_append(t *testing.T) {
+	runMainFunctionality(true)
+}
+
+// TestMain_new tests the main functionality when creating a new log file.
+func TestMain_new(t *testing.T) {
+	runMainFunctionality(false)
+}
+
 // runMainFunctionality runs the main functionality for testing purposes.
 // If copyExistingLog is true, it copies the existing log file to a temporary location.
 func runMainFunctionality(copyExistingLog bool) {
@@ -65,16 +75,6 @@ func runMainFunctionality(copyExistingLog bool) {
 	if err := os.Remove(tmpLogPath); err != nil {
 		log.Println("Error removing temporary log file:", err)
 	}
-}
-
-// TestMain_append tests the main functionality when appending to an existing log file.
-func TestMain_append(t *testing.T) {
-	runMainFunctionality(true)
-}
-
-// TestMain_new tests the main functionality when creating a new log file.
-func TestMain_new(t *testing.T) {
-	runMainFunctionality(false)
 }
 
 // copyLogFile copies the log file from srcPath to dstPath.

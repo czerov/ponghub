@@ -305,13 +305,16 @@ Default notification is automatically enabled when:
 
 ```yaml
 email:
-  smtp_host: "smtp.gmail.com"    # SMTP server address
-  smtp_port: 587                 # SMTP port
-  from: "alerts@yourdomain.com"  # Sender email
-  to:                            # Recipient list
+  smtp_host: "smtp.gmail.com"       # Leave empty to read from environment variables
+  smtp_port: 587                    # SMTP port, default is 587
+  from: "alerts@yourdomain.com"     # Sender email address
+  to:                               # Recipient email addresses
     - "admin@yourdomain.com"
     - "ops@yourdomain.com"
   subject: "PongHub Service Alert"  # Email subject (optional)
+  use_tls: true                     # Use TLS (optional)
+  use_starttls: true                # Use StartSSL (optional)
+  skip_verify: true                 # Skip SSL certificate verification (optional)
 ```
 
 Required environment variables:

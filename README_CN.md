@@ -305,13 +305,16 @@ notifications:
 
 ```yaml
 email:
-  smtp_host: "smtp.gmail.com"    # SMTP服务器地址
-  smtp_port: 587                 # SMTP端口
-  from: "alerts@yourdomain.com"  # 发件人邮箱
-  to:                            # 收件人列表
+  smtp_host: "smtp.gmail.com"       # SMTP服务器地址
+  smtp_port: 587                    # SMTP端口
+  from: "alerts@yourdomain.com"     # 发件人邮箱
+  to:                               # 收件人列表
     - "admin@yourdomain.com"
     - "ops@yourdomain.com"
   subject: "PongHub Service Alert"  # 邮件主题（可选）
+  use_tls: true                     # 使用 TLS（可选）
+  use_starttls: true                # 使用 StartTLS（可选）
+  skip_verify: false                # 跳过证书验证（可选）
 ```
 
 所需环境变量：
