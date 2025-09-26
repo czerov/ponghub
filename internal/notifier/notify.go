@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/wcy-dt/ponghub/internal/types/structures/checker"
+	"github.com/wcy-dt/ponghub/internal/types/structures/configure"
 	"github.com/wcy-dt/ponghub/internal/types/types/chk_result"
 	"github.com/wcy-dt/ponghub/internal/types/types/default_config"
 )
@@ -39,6 +40,91 @@ func WriteNotifications(checkResult []checker.Service, certNotifyDays int) {
 	}()
 
 	writeNotificationReport(f, statusNoneEndpoints, certProblemEndpoints)
+}
+
+// SendNotifications sends notifications through various channels using the notification manager
+func SendNotifications(checkResult []checker.Service, certNotifyDays int, notificationConfig *configure.NotificationConfig) {
+	statusNoneEndpoints := collectUnavailableEndpoints(checkResult)
+	certProblemEndpoints := collectCertProblemEndpoints(checkResult, certNotifyDays)
+
+	if len(statusNoneEndpoints) == 0 && len(certProblemEndpoints) == 0 {
+		log.Println("No service issues found, skipping notifications")
+		return
+	}
+
+	// Create notification manager
+	manager := NewNotificationManager(notificationConfig)
+	if !manager.IsEnabled() {
+		log.Println("Notification manager is not enabled or no services configured")
+		return
+	}
+
+	// Generate notification content
+	title := "🚨 PongHub Service Status Alert"
+	message := generateNotificationMessage(statusNoneEndpoints, certProblemEndpoints)
+
+	// Send notifications
+	manager.SendNotification(title, message)
+}
+
+// generateNotificationMessage creates a formatted message for notifications
+func generateNotificationMessage(statusNoneEndpoints, certProblemEndpoints map[string][]checker.Endpoint) string {
+	var message strings.Builder
+
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+	message.WriteString(fmt.Sprintf("Generated at: %s\n\n", currentTime))
+
+	// Add unavailable services section
+	if len(statusNoneEndpoints) > 0 {
+		message.WriteString("🔴 UNAVAILABLE SERVICES:\n")
+		message.WriteString(strings.Repeat("=", 30) + "\n")
+
+		for serviceName, endpoints := range statusNoneEndpoints {
+			message.WriteString(fmt.Sprintf("\n📋 Service: %s\n", serviceName))
+			for _, endpoint := range endpoints {
+				message.WriteString(fmt.Sprintf("  • URL: %s\n", endpoint.URL))
+				message.WriteString(fmt.Sprintf("    Method: %s\n", endpoint.Method))
+				if endpoint.StatusCode > 0 {
+					message.WriteString(fmt.Sprintf("    Status Code: %d\n", endpoint.StatusCode))
+				}
+				message.WriteString(fmt.Sprintf("    Attempts: %d/%d successful\n", endpoint.SuccessNum, endpoint.AttemptNum))
+				if len(endpoint.FailureDetails) > 0 {
+					message.WriteString(fmt.Sprintf("    Last Error: %s\n", endpoint.FailureDetails[len(endpoint.FailureDetails)-1]))
+				}
+			}
+		}
+	}
+
+	// Add certificate issues section
+	if len(certProblemEndpoints) > 0 {
+		message.WriteString("\n🔐 CERTIFICATE ISSUES:\n")
+		message.WriteString(strings.Repeat("=", 30) + "\n")
+
+		for serviceName, endpoints := range certProblemEndpoints {
+			message.WriteString(fmt.Sprintf("\n📋 Service: %s\n", serviceName))
+			for _, endpoint := range endpoints {
+				message.WriteString(fmt.Sprintf("  • URL: %s\n", endpoint.URL))
+				if endpoint.IsCertExpired {
+					message.WriteString("    ❌ Certificate Status: EXPIRED\n")
+				} else {
+					message.WriteString("    ⚠️ Certificate Status: EXPIRES SOON\n")
+				}
+				message.WriteString(fmt.Sprintf("    Days Remaining: %d\n", endpoint.CertRemainingDays))
+			}
+		}
+	}
+
+	// Add summary
+	unavailableCount := countEndpoints(statusNoneEndpoints)
+	certIssueCount := countEndpoints(certProblemEndpoints)
+
+	message.WriteString("\n📊 SUMMARY:\n")
+	message.WriteString(strings.Repeat("=", 30) + "\n")
+	message.WriteString(fmt.Sprintf("Unavailable Endpoints: %d\n", unavailableCount))
+	message.WriteString(fmt.Sprintf("Certificate Issues: %d\n", certIssueCount))
+	message.WriteString(fmt.Sprintf("Total Issues: %d\n", unavailableCount+certIssueCount))
+
+	return message.String()
 }
 
 // collectUnavailableEndpoints finds all endpoints with status NONE

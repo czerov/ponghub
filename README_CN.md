@@ -66,6 +66,7 @@ PongHub 是一个开源的服务状态监控网站，旨在帮助用户监控和
 | `services.endpoints.body`           | 字符串 | 请求体内容                     | ✖️ | 仅在 `POST`/`PUT` 请求时使用          |
 | `services.endpoints.status_code`    | 整数  | 响应体期望的 HTTP 状态码（默认 `200`） | ✖️ | 默认 `200`                       |
 | `services.endpoints.response_regex` | 字符串 | 响应体内容的正则表达式匹配             | ✖️ |                                |
+| `notifications`                     | 对象  | 通知配置                      | ✖️ | 详见 [自定义通知](#自定义通知)             |
 
 下面是一个示例配置文件：
 
@@ -257,9 +258,160 @@ services:
 
 ### 自定义通知
 
-PongHub 默认利用 GitHub Actions 报错实现异常告警通知。
+PongHub 现在支持多种通知方式，当服务出现问题或证书即将过期时，可以通过多个渠道发送警报通知。
 
-如果需要自定义通知，可以在根目录下创建 `notify.sh` 脚本，脚本可以读取 `data/notify.txt` 文件中的内容，并通过邮件、短信或其他方式发送通知。如果脚本使用到了环境变量，请确保在 GitHub 仓库的 "Settings" -> "Secrets and variables" -> "Actions" 中正确设置这些变量。
+<details>
+<summary>点击展开查看支持的通知类型</summary>
+
+<div markdown="1">
+
+PongHub 支持以下通知方式：
+
+- **默认通知** - 通过GitHub Actions工作流失败进行通知
+- **邮件通知** - 通过SMTP发送邮件
+- **Discord** - 通过Webhook发送到Discord频道
+- **Slack** - 通过Webhook发送到Slack频道
+- **Telegram** - 通过Bot API发送消息
+- **企业微信** - 通过企业微信群机器人发送消息
+- **自定义Webhook** - 发送到任意HTTP端点
+
+使用时，在 `config.yaml` 文件中添加 `notifications` 配置块：
+
+```yaml
+notifications:
+  enabled: true  # 启用通知功能
+  methods:       # 要启用的通知方式
+    - email
+    - discord
+    - slack
+    - telegram
+    - wechat
+    - webhook
+  
+  # 各种通知方式的具体配置...
+```
+
+#### ⚙️ 默认通知
+
+默认情况下，PongHub 会在 GitHub Actions 工作流失败时发送通知。
+
+默认通知会在以下情况自动启用：
+
+- 没有配置 `notifications` 字段
+- `notifications.enabled: true` 但没有指定 `methods`
+- 显式配置 `methods: ["default"]`
+
+#### 📧 邮件通知
+
+```yaml
+email:
+  smtp_host: "smtp.gmail.com"    # SMTP服务器地址
+  smtp_port: 587                 # SMTP端口
+  from: "alerts@yourdomain.com"  # 发件人邮箱
+  to:                            # 收件人列表
+    - "admin@yourdomain.com"
+    - "ops@yourdomain.com"
+  subject: "PongHub Service Alert"  # 邮件主题（可选）
+```
+
+所需环境变量：
+
+- `SMTP_USERNAME` - SMTP用户名
+- `SMTP_PASSWORD` - SMTP密码
+
+#### 💬 Discord 配置
+
+```yaml
+discord:
+  webhook_url: "https://discord.com/api/webhooks/your_webhook_id/your_webhook_token"  # 留空则从环境变量读取
+  username: "PongHub Bot"  # 发送消息的用户名（可选）
+  avatar_url: ""           # 发送消息的头像URL（可选）
+```
+
+所需环境变量：
+
+- `DISCORD_WEBHOOK_URL` - Discord Webhook URL
+
+#### 💬 Slack 配置
+
+```yaml
+slack:
+  webhook_url: "https://hooks.slack.com/services/your/webhook/url"  # 留空则从环境变量读取
+  channel: "#alerts"          # 发送消息的频道（可选）
+  username: "PongHub Bot"     # 发送消息的用户名（可选）
+  icon_emoji: ":robot_face:"  # 消息图标（可选）
+```
+
+所需环境变量：
+
+- `SLACK_WEBHOOK_URL` - Slack Webhook URL
+
+#### 💬 Telegram 配置
+
+```yaml
+telegram:
+  bot_token: "your_bot_token"  # 留空则从环境变量读取
+  chat_id: "your_chat_id"      # 留空则从环境变量读取
+```
+
+所需环境变量：
+
+- `TELEGRAM_BOT_TOKEN` - Telegram 机器人 Token
+- `TELEGRAM_CHAT_ID` - Telegram 聊天 ID
+
+#### 💬 企业微信配置
+
+```yaml
+wechat:
+  webhook_url: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=your_key"  # 留空则从环境变量读取
+```
+
+所需环境变量：
+
+- `WECHAT_WEBHOOK_URL` - 企业微信群机器人 Webhook URL
+
+#### 💬 自定义Webhook配置
+
+```yaml
+webhook:
+  url: "https://your-webhook-endpoint.com/notify"  # 留空则从环境变量读取
+  method: "POST"  # HTTP方法（可选，默认POST）
+  headers:        # 自定义请求头（可选）
+    Content-Type: "application/json"
+```
+
+所需环境变量：
+
+- `WEBHOOK_URL` - 自定义 Webhook URL
+
+</div>
+</details>
+
+以上所需的环境变量均可通过 GitHub Actions 的 Repository Secrets 设置。
+
+下面是一个示例配置文件：
+
+```yaml
+services:
+  - name: "Example Service"
+    endpoints:
+      - url: "https://example.com/health"
+notifications:
+  enabled: true
+  methods:
+    - email
+    - discord
+  email:
+    smtp_host: "smtp.gmail.com"
+    smtp_port: 587
+    from: "alerts@yourdomain.com"
+    to:
+      - "admin@yourdomain.com"
+      - "ops@yourdomain.com"
+  discord:
+    webhook_url: "https://discord.com/api/webhooks/your_webhook_id/your_webhook_token"
+    username: "PongHub Bot"
+```
 
 ## 本地开发
 
@@ -267,6 +419,12 @@ PongHub 默认利用 GitHub Actions 报错实现异常告警通知。
 
 ```bash
 make run
+```
+
+项目有一些测试用例，可以通过以下命令运行测试：
+
+```bash
+make test
 ```
 
 ## 免责声明

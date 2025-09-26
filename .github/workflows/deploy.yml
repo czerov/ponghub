@@ -59,19 +59,21 @@ jobs:
           git-config-name: github-pages-deploy-action
           git-config-email: noreply@github.com
 
-      - name: "⚠️ Notify Unavailable Services"
+      - name: "⚠️ Handle Service Notifications"
         run: |
           if [ -f data/notify.txt ] && [ -s data/notify.txt ]; then
-            echo "Unavailable services found:"
+            echo "Service issues detected:"
             cat data/notify.txt
-            if [ -f "./notify.sh" ]; then
-              echo "Running custom notification script..."
-              chmod +x ./notify.sh
-              ./notify.sh
-            else
-              echo "No custom notification script found, using default notification."
+            echo "Service issues have been reported through the configured notification channels."
+            echo "If no notifications were received, please check your notification configuration in config.yaml"
+            if [ "$PONGHUB_HAS_ALERTS" = "true" ]; then
+              echo ""
+              echo "🚨 DEFAULT NOTIFICATION: GitHub Actions failure triggered as notification method"
+              echo "This workflow is failing intentionally to alert you of service issues."
+              echo "To receive notifications through other channels, configure them in config.yaml"
+              echo ""
               exit 1
             fi
           else
-            echo "No unavailable services."
+            echo "No service issues detected."
           fi
