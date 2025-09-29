@@ -268,12 +268,12 @@ PongHub now supports multiple notification methods. When services have issues or
 PongHub supports the following notification methods:
 
 - **Default Notification** - Notification through GitHub Actions workflow failure
-- **Email Notification** - Send emails via SMTP
-- **Discord** - Send to Discord channels via Webhook
-- **Slack** - Send to Slack channels via Webhook
-- **Telegram** - Send messages via Bot API
-- **WeChat Work** - Send messages via WeChat Work group bot
-- **Custom Webhook** - Send to any HTTP endpoint
+- **Email Notification** - Send emails via SMTP with advanced security options
+- **Discord** - Send to Discord channels via Webhook with rich embeds
+- **Slack** - Send to Slack channels via Webhook with Block Kit support
+- **Telegram** - Send messages via Bot API with advanced formatting
+- **WeChat Work** - Send messages via WeChat Work group bot with multiple message types
+- **Custom Webhook** - Send to any HTTP endpoint with advanced configuration
 
 To use, add a `notifications` configuration block in your `config.yaml` file:
 
@@ -305,20 +305,24 @@ Default notification is automatically enabled when:
 
 ```yaml
 email:
-  smtp_host: "smtp.gmail.com"       # Leave empty to read from environment variables
+  smtp_host: "smtp.gmail.com"       # SMTP server host
   smtp_port: 587                    # SMTP port, default is 587
   from: "alerts@yourdomain.com"     # Sender email address
   to:                               # Recipient email addresses
     - "admin@yourdomain.com"
     - "ops@yourdomain.com"
   subject: "PongHub Service Alert"  # Email subject (optional)
-  use_tls: true                     # Use TLS (optional)
-  use_starttls: true                # Use StartSSL (optional)
-  skip_verify: true                 # Skip SSL certificate verification (optional)
+  use_tls: true                     # Use TLS encryption (optional)
+  use_starttls: true                # Use STARTTLS (optional)
+  skip_verify: false                # Skip TLS certificate verification (optional)
+  timeout: 30                       # Connection timeout in seconds (optional)
+  username: ""                      # SMTP username (optional, uses env var if empty)
+  password: ""                      # SMTP password (optional, uses env var if empty)
+  template: ""                      # Custom email template path (optional)
+  is_html: true                     # Send as HTML email (optional)
 ```
 
 Required environment variables:
-
 - `SMTP_USERNAME` - SMTP username
 - `SMTP_PASSWORD` - SMTP password
 
@@ -327,12 +331,19 @@ Required environment variables:
 ```yaml
 discord:
   webhook_url: "https://discord.com/api/webhooks/your_webhook_id/your_webhook_token"  # Leave empty to read from environment variables
-  username: "PongHub Bot"  # Username for sending messages (optional)
-  avatar_url: ""           # Avatar URL for sending messages (optional)
+  username: "PongHub Bot"           # Username for sending messages (optional)
+  avatar_url: ""                    # Avatar URL for sending messages (optional)
+  timeout: 30                       # Request timeout in seconds (optional)
+  retries: 3                        # Number of retry attempts (optional)
+  color: 15158332                   # Embed color in decimal format (optional)
+  use_embeds: true                  # Use rich embeds instead of plain text (optional)
+  mentions:                         # User/role IDs to mention (optional)
+    - "123456789012345678"
+  headers:                          # Custom headers (optional)
+    User-Agent: "PongHub-Bot/1.0"
 ```
 
 Required environment variables:
-
 - `DISCORD_WEBHOOK_URL` - Discord Webhook URL
 
 #### 💬 Slack Configuration
@@ -340,25 +351,38 @@ Required environment variables:
 ```yaml
 slack:
   webhook_url: "https://hooks.slack.com/services/your/webhook/url"  # Leave empty to read from environment variables
-  channel: "#alerts"          # Channel to send messages to (optional)
-  username: "PongHub Bot"     # Username for sending messages (optional)
-  icon_emoji: ":robot_face:"  # Message icon (optional)
+  channel: "#alerts"                # Channel to send messages to (optional)
+  username: "PongHub Bot"           # Username for sending messages (optional)
+  icon_emoji: ":robot_face:"        # Message icon emoji (optional)
+  icon_url: ""                      # Custom icon URL (optional)
+  timeout: 30                       # Request timeout in seconds (optional)
+  retries: 3                        # Number of retry attempts (optional)
+  color: "danger"                   # Message color: good, warning, danger, or hex (optional)
+  use_blocks: true                  # Use Block Kit formatting (optional)
+  thread_ts: ""                     # Reply to thread timestamp (optional)
+  headers:                          # Custom headers (optional)
+    User-Agent: "PongHub-Bot/1.0"
 ```
 
 Required environment variables:
-
 - `SLACK_WEBHOOK_URL` - Slack Webhook URL
 
 #### 💬 Telegram Configuration
 
 ```yaml
 telegram:
-  bot_token: "your_bot_token"  # Leave empty to read from environment variables
-  chat_id: "your_chat_id"      # Leave empty to read from environment variables
+  bot_token: "your_bot_token"                 # Leave empty to read from environment variables
+  chat_id: "your_chat_id"                     # Leave empty to read from environment variables
+  parse_mode: "HTML"                          # HTML, Markdown, MarkdownV2 (optional)
+  disable_web_page_preview: true              # Disable web page preview (optional)
+  disable_notification: false                 # Send silently (optional)
+  timeout: 30                                 # Request timeout in seconds (optional)
+  retries: 3                                  # Number of retry attempts (optional)
+  thread_id: ""                               # Message thread ID for topics (optional)
+  reply_to_message_id: ""                     # Reply to specific message (optional)
 ```
 
 Required environment variables:
-
 - `TELEGRAM_BOT_TOKEN` - Telegram Bot Token
 - `TELEGRAM_CHAT_ID` - Telegram Chat ID
 
@@ -367,10 +391,18 @@ Required environment variables:
 ```yaml
 wechat:
   webhook_url: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=your_key"  # Leave empty to read from environment variables
+  msg_type: "text"                      # Message type: text, markdown, image, news (optional)
+  timeout: 30                           # Request timeout in seconds (optional)
+  retries: 3                            # Number of retry attempts (optional)
+  mentioned_list:                       # User IDs to mention (optional)
+    - "@all"
+  mentioned_mobile:                     # Mobile numbers to mention (optional)
+    - "13800138000"
+  headers:                              # Custom headers (optional)
+    User-Agent: "PongHub-Bot/1.0"
 ```
 
 Required environment variables:
-
 - `WECHAT_WEBHOOK_URL` - WeChat Work group bot Webhook URL
 
 #### 💬 Custom Webhook Configuration
@@ -378,13 +410,39 @@ Required environment variables:
 ```yaml
 webhook:
   url: "https://your-webhook-endpoint.com/notify"  # Leave empty to read from environment variables
-  method: "POST"  # HTTP method (optional, default POST)
-  headers:  # Custom request headers (optional)
+  method: "POST"                        # HTTP method (optional, default POST)
+  headers:                              # Custom request headers (optional)
     Content-Type: "application/json"
+    Authorization: "Bearer your_token"
+  timeout: 30                           # Request timeout in seconds (optional)
+  retries: 3                            # Number of retry attempts (optional)
+  retry_delay: 5                        # Delay between retries in seconds (optional)
+  skip_tls_verify: false                # Skip TLS certificate verification (optional)
+  basic_auth:                           # Basic authentication (optional)
+    username: "user"
+    password: "pass"
+  bearer_token: "your_bearer_token"     # Bearer token authentication (optional)
+  custom_payload:                       # Custom request payload (optional)
+    template: '{"alert": "{{.Title}}", "details": "{{.Message}}"}'
+    content_type: "application/json"
+    fields:
+      environment: "production"
+      service: "ponghub"
+    include_title: true
+    include_message: true
+    title_field: "alert_title"
+    message_field: "alert_message"
+  expected_codes: [200, 201, 202]       # Expected HTTP status codes (optional)
+  success_condition: "status.*ok"       # Response body condition for success (optional)
+  failure_retry:                        # Advanced retry configuration (optional)
+    max_retries: 5
+    initial_delay: 2
+    max_delay: 60
+    backoff_factor: 2.0
+    retry_codes: [429, 500, 502, 503, 504]
 ```
 
 Required environment variables:
-
 - `WEBHOOK_URL` - Custom Webhook URL
 
 </div>
@@ -392,18 +450,27 @@ Required environment variables:
 
 All required environment variables can be set through GitHub Actions Repository Secrets.
 
-Here is an example configuration file:
+Here is a complete example configuration file with notifications:
 
 ```yaml
+display_num: 72
+timeout: 5
+max_retry_times: 2
+max_log_days: 3
+cert_notify_days: 7
+
 services:
   - name: "Example Service"
     endpoints:
       - url: "https://example.com/health"
+
 notifications:
   enabled: true
   methods:
     - email
     - discord
+    - slack
+  
   email:
     smtp_host: "smtp.gmail.com"
     smtp_port: 587
@@ -411,9 +478,21 @@ notifications:
     to:
       - "admin@yourdomain.com"
       - "ops@yourdomain.com"
+    subject: "🚨 PongHub Service Alert"
+    use_starttls: true
+    is_html: true
+  
   discord:
-    webhook_url: "https://discord.com/api/webhooks/your_webhook_id/your_webhook_token"
+    username: "PongHub Monitor"
+    use_embeds: true
+    color: 15158332
+  
+  slack:
+    channel: "#alerts"
     username: "PongHub Bot"
+    icon_emoji: ":warning:"
+    use_blocks: true
+    color: "danger"
 ```
 
 ## Local Development
