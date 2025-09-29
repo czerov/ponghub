@@ -3,9 +3,9 @@ package channels
 import (
 	"crypto/tls"
 	"fmt"
-	"io"
 	"net/smtp"
 	"os"
+	"time"
 
 	"github.com/wcy-dt/ponghub/internal/types/structures/configure"
 )
@@ -110,52 +110,95 @@ func (e *EmailNotifier) sendWithStartTLS(addr, username, password, title, messag
 	return e.sendMessage(client, title, message)
 }
 
-// sendPlain sends email using plain connection (insecure)
+// sendPlain sends email using plain connection (not recommended)
 func (e *EmailNotifier) sendPlain(addr, username, password, title, message string) error {
-	auth := smtp.PlainAuth("", username, password, e.config.SMTPHost)
+	client, err := smtp.Dial(addr)
+	if err != nil {
+		return fmt.Errorf("failed to connect to SMTP server: %w", err)
+	}
+	defer func(client *smtp.Client) {
+		if err := client.Quit(); err != nil {
+			fmt.Println("Error quitting SMTP client:", err)
+		}
+	}(client)
 
-	subject := title
-	if e.config.Subject != "" {
-		subject = e.config.Subject
+	auth := smtp.PlainAuth("", username, password, e.config.SMTPHost)
+	if err := client.Auth(auth); err != nil {
+		return fmt.Errorf("SMTP authentication failed: %w", err)
 	}
 
-	body := fmt.Sprintf("Subject: %s\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s", subject, message)
-
-	return smtp.SendMail(addr, auth, e.config.From, e.config.To, []byte(body))
+	return e.sendMessage(client, title, message)
 }
 
-// sendMessage sends the actual email message using the provided SMTP client
+// sendMessage sends the actual email message using the SMTP client
 func (e *EmailNotifier) sendMessage(client *smtp.Client, title, message string) error {
+	// Set sender
 	if err := client.Mail(e.config.From); err != nil {
 		return fmt.Errorf("failed to set sender: %w", err)
 	}
 
-	for _, to := range e.config.To {
-		if err := client.Rcpt(to); err != nil {
-			return fmt.Errorf("failed to set recipient %s: %w", to, err)
+	// Set recipients
+	for _, recipient := range e.config.To {
+		if err := client.Rcpt(recipient); err != nil {
+			return fmt.Errorf("failed to set recipient %s: %w", recipient, err)
 		}
 	}
 
+	// Send email body
 	writer, err := client.Data()
 	if err != nil {
 		return fmt.Errorf("failed to get data writer: %w", err)
 	}
-	defer func(writer io.WriteCloser) {
-		if err := writer.Close(); err != nil {
-			fmt.Println("Error closing writer:", err)
-		}
-	}(writer)
 
-	subject := title
-	if e.config.Subject != "" {
-		subject = e.config.Subject
+	emailBody := e.buildEmailBody(title, message)
+	if _, err := writer.Write([]byte(emailBody)); err != nil {
+		return fmt.Errorf("failed to write email body: %w", err)
 	}
 
-	body := fmt.Sprintf("Subject: %s\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s", subject, message)
-
-	if _, err := writer.Write([]byte(body)); err != nil {
-		return fmt.Errorf("failed to write message: %w", err)
+	if err := writer.Close(); err != nil {
+		return fmt.Errorf("failed to close email writer: %w", err)
 	}
 
 	return nil
+}
+
+// buildEmailBody constructs the email body with proper headers
+func (e *EmailNotifier) buildEmailBody(title, message string) string {
+	headers := make(map[string]string)
+	headers["From"] = e.config.From
+	headers["To"] = e.formatRecipients()
+	headers["Subject"] = title
+	headers["MIME-Version"] = "1.0"
+	headers["Content-Type"] = "text/plain; charset=UTF-8"
+	headers["Date"] = time.Now().Format(time.RFC1123Z)
+
+	// Add custom headers if configured
+	if e.config.ReplyTo != "" {
+		headers["Reply-To"] = e.config.ReplyTo
+	}
+
+	// Build header string
+	headerStr := ""
+	for key, value := range headers {
+		headerStr += fmt.Sprintf("%s: %s\r\n", key, value)
+	}
+
+	// Combine headers and body
+	return headerStr + "\r\n" + message
+}
+
+// formatRecipients formats the recipient list for the To header
+func (e *EmailNotifier) formatRecipients() string {
+	if len(e.config.To) == 0 {
+		return ""
+	}
+
+	result := ""
+	for i, recipient := range e.config.To {
+		if i > 0 {
+			result += ", "
+		}
+		result += recipient
+	}
+	return result
 }
