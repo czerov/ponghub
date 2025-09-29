@@ -1,7 +1,6 @@
 package channels
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"time"

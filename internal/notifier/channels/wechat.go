@@ -3,6 +3,7 @@ package channels
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/wcy-dt/ponghub/internal/types/structures/configure"
@@ -74,8 +75,8 @@ func (w *WeChatNotifier) buildTextPayload(title, message string) map[string]inte
 
 		for _, mention := range w.config.Mentions {
 			if mention != "" {
-				// Check if it's a mobile number (simple check)
-				if len(mention) == 11 && mention[0] == '1' {
+				// Check if it's a mobile number using international phone number validation
+				if isValidPhoneNumber(mention) {
 					mentionedMobileList = append(mentionedMobileList, mention)
 				} else {
 					mentionedList = append(mentionedList, mention)
@@ -159,4 +160,35 @@ func (w *WeChatNotifier) ValidateConfig() error {
 	}
 
 	return nil
+}
+
+// isValidPhoneNumber checks if the given phone number is valid based on international standards
+func isValidPhoneNumber(phone string) bool {
+	// Remove common separators and spaces for validation
+	cleanPhone := regexp.MustCompile(`[\s\-().]+`).ReplaceAllString(phone, "")
+
+	// Check various international phone number patterns
+	patterns := []*regexp.Regexp{
+		// International format with + prefix (E.164 format)
+		regexp.MustCompile(`^\+[1-9]\d{1,14}$`),
+		// US/Canada format (10-11 digits, can start with 1)
+		regexp.MustCompile(`^1?[2-9]\d{2}[2-9]\d{6}$`),
+		// Chinese mobile numbers (11 digits starting with 1)
+		regexp.MustCompile(`^1[3-9]\d{9}$`),
+		// UK mobile numbers (11 digits starting with 07)
+		regexp.MustCompile(`^07\d{9}$`),
+		// General international mobile (7-15 digits, not starting with 0)
+		regexp.MustCompile(`^[1-9]\d{6,14}$`),
+		// European format (8-15 digits)
+		regexp.MustCompile(`^[1-9]\d{7,14}$`),
+	}
+
+	// Check if the cleaned phone matches any pattern
+	for _, pattern := range patterns {
+		if pattern.MatchString(cleanPhone) {
+			return true
+		}
+	}
+
+	return false
 }

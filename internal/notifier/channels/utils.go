@@ -76,7 +76,11 @@ func sendHTTPRequest(url string, method string, payload interface{}, headers map
 
 			// Reset body reader for retry
 			if payload != nil {
-				jsonData, _ := json.Marshal(payload)
+				jsonData, err := json.Marshal(payload)
+				if err != nil {
+					lastErr = fmt.Errorf("failed to marshal payload during retry: %w", err)
+					continue
+				}
 				bodyReader = bytes.NewBuffer(jsonData)
 			}
 		}
@@ -107,7 +111,6 @@ func sendHTTPRequest(url string, method string, payload interface{}, headers map
 		body, _ := io.ReadAll(resp.Body)
 		if err := resp.Body.Close(); err != nil {
 			lastErr = fmt.Errorf("failed to close response body: %w", err)
-			continue
 		}
 
 		// Check if request was successful

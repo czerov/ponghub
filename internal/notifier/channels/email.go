@@ -3,6 +3,7 @@ package channels
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net/smtp"
 	"os"
 	"time"
@@ -59,7 +60,7 @@ func (e *EmailNotifier) sendWithTLS(addr, username, password, title, message str
 	}
 	defer func(conn *tls.Conn) {
 		if err := conn.Close(); err != nil {
-			fmt.Println("Error closing TLS connection:", err)
+			log.Printf("Error closing TLS connection: %v", err)
 		}
 	}(conn)
 
@@ -69,7 +70,7 @@ func (e *EmailNotifier) sendWithTLS(addr, username, password, title, message str
 	}
 	defer func(client *smtp.Client) {
 		if err := client.Quit(); err != nil {
-			fmt.Println("Error quitting SMTP client:", err)
+			log.Printf("Error quitting SMTP client: %v", err)
 		}
 	}(client)
 
@@ -89,7 +90,7 @@ func (e *EmailNotifier) sendWithStartTLS(addr, username, password, title, messag
 	}
 	defer func(client *smtp.Client) {
 		if err := client.Quit(); err != nil {
-			fmt.Println("Error quitting SMTP client:", err)
+			log.Printf("Error quitting SMTP client: %v", err)
 		}
 	}(client)
 
@@ -118,7 +119,7 @@ func (e *EmailNotifier) sendPlain(addr, username, password, title, message strin
 	}
 	defer func(client *smtp.Client) {
 		if err := client.Quit(); err != nil {
-			fmt.Println("Error quitting SMTP client:", err)
+			log.Printf("Error quitting SMTP client: %v", err)
 		}
 	}(client)
 
